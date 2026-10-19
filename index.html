@@ -809,8 +809,9 @@
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed && Array.isArray(parsed.players) && Array.isArray(parsed.matches)) {
-            return ensureStateDefaults(parsed);
-          }
+              if (!parsed.adjudgedWinners) parsed.adjudgedWinners = {};
+              return parsed;
+            }
         }
       } catch (e) {
         console.warn('LocalStorage load failed', e);
@@ -1004,6 +1005,7 @@
       const periodLabel = getPeriodLabel(currentPeriod).toUpperCase();
 
       const isCompleted = state.adjudgedWinners && state.adjudgedWinners[currentPeriod];
+
       const badgeText = isCompleted ? `CHAMPION · ${periodLabel}` : `LEADING · ${periodLabel}`;
       const badgeEl = document.getElementById('leading-badge-text');
       if (badgeEl) badgeEl.textContent = badgeText;
