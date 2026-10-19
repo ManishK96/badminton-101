@@ -597,7 +597,7 @@
 
     // OPTIONAL: You can also hardcode your firebaseConfig here before pushing to GitHub:
     const EMBEDDED_FIREBASE_CONFIG = // Import the functions you need from the SDKs you nee
-                                    'const firebaseConfig = {
+                                    const firebaseConfig = {
   apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
   authDomain: "badminton-101-57f82.firebaseapp.com",
   projectId: "badminton-101-57f82",
@@ -605,11 +605,7 @@
   messagingSenderId: "60091223084",
   appId: "1:60091223084:web:b38f1d5ec5bb7b90f91589",
   measurementId: "G-45P104NQQT"
-};'
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);;
+};
 
     // Default Seed Data matching the user's screenshots exactly:
     const DEFAULT_DATA = {
