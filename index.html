@@ -596,7 +596,27 @@
     const FIREBASE_CONFIG_KEY = 'badminton_101_firebase_config_v1';
 
     // OPTIONAL: You can also hardcode your firebaseConfig here before pushing to GitHub:
-    const EMBEDDED_FIREBASE_CONFIG = null;
+    const EMBEDDED_FIREBASE_CONFIG = // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
+  authDomain: "badminton-101-57f82.firebaseapp.com",
+  projectId: "badminton-101-57f82",
+  storageBucket: "badminton-101-57f82.firebasestorage.app",
+  messagingSenderId: "60091223084",
+  appId: "1:60091223084:web:b38f1d5ec5bb7b90f91589",
+  measurementId: "G-45P104NQQT"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);;
 
     // Default Seed Data matching the user's screenshots exactly:
     const DEFAULT_DATA = {
