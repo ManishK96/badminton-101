@@ -45,11 +45,18 @@
   </script>
 
   <style>
+    /* CRITICAL: Force .hidden elements to be completely removed from layout */
+    .hidden {
+      display: none !important;
+    }
     body {
       background-color: #0c1411;
       color: #e5ede9;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      -webkit-tap-highlight-color: transparent;
+    }
+    button, [role="button"], select, input[type="submit"] {
+      cursor: pointer;
+      touch-action: manipulation;
     }
     .font-bebas {
       font-family: 'Bebas Neue', sans-serif;
@@ -80,7 +87,7 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-[#0c1411] text-[#e3ebe7] flex flex-col items-center p-0 sm:p-4 select-none sm:select-auto">
+<body class="min-h-screen bg-[#0c1411] text-[#e3ebe7] flex flex-col items-center p-0 sm:p-4">
 
   <!-- Mobile/Responsive Frame Container -->
   <div class="w-full max-w-md min-h-screen sm:min-h-0 sm:my-4 bg-[#101915] sm:border sm:border-[#22352c] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative pb-10">
@@ -89,21 +96,21 @@
     <header class="px-5 pt-4 pb-2 bg-[#101915] border-b border-[#1b2b23] relative z-20">
       <div class="flex items-center justify-between mb-3">
         <!-- Close / Reset Home button -->
-        <button id="btn-home" aria-label="Home" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
+        <button id="btn-home" onclick="switchTab('standings')" aria-label="Home" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
 
         <!-- Cloud Sync Status Pill -->
-        <button id="btn-cloud-status" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all">
+        <button id="btn-cloud-status" onclick="openFirebaseModal()" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all">
           <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
           <span id="cloud-status-text">Local Mode</span>
         </button>
 
         <!-- Options menu (...) button -->
         <div class="relative">
-          <button id="btn-options" aria-label="Menu" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
+          <button id="btn-options" onclick="toggleOptionsMenu(event)" aria-label="Menu" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
             </svg>
@@ -111,37 +118,37 @@
           
           <!-- Dropdown Menu -->
           <div id="options-dropdown" class="hidden absolute right-0 mt-2 w-60 bg-[#16231d] border border-[#273d32] rounded-xl shadow-xl py-2 z-50 text-sm">
-            <button id="menu-firebase-setup" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#48a97c] font-semibold">
+            <button id="menu-firebase-setup" onclick="openFirebaseModal()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#48a97c] font-semibold">
               <span>☁️</span>
               <span>Firebase Real-time Sync</span>
             </button>
             <div class="h-px bg-[#24382e] my-1"></div>
-            <button id="menu-adjudge-winner" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#e5a93c]">
+            <button id="menu-adjudge-winner" onclick="handleAdjudgeMenuClick()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#e5a93c]">
               <span>👑</span>
               <span>Adjudge Month Winner</span>
             </button>
-            <button id="menu-winner-history" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
+            <button id="menu-winner-history" onclick="openHistoryModal()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
               <span>🏆</span>
               <span>Past Champions</span>
             </button>
             <div class="h-px bg-[#24382e] my-1"></div>
-            <button id="menu-toggle-sound" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center justify-between text-[#d1ded7]">
+            <button id="menu-toggle-sound" onclick="toggleSound()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center justify-between text-[#d1ded7]">
               <span class="flex items-center gap-2"><span>🔊</span> Sound Effects</span>
               <span id="sound-status-badge" class="text-xs px-2 py-0.5 rounded bg-[#203429] text-[#48a97c]">ON</span>
             </button>
-            <button id="menu-export-json" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
+            <button id="menu-export-json" onclick="exportDataJson()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
               <span>📥</span>
               <span>Export Data (JSON)</span>
             </button>
-            <button id="menu-import-json" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
+            <button id="menu-import-json" onclick="triggerImportJson()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
               <span>📤</span>
               <span>Import Data (JSON)</span>
             </button>
             <div class="h-px bg-[#24382e] my-1"></div>
-            <button id="menu-reset-sample" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-[#9eb4aa] hover:text-[#48a97c]">
+            <button id="menu-reset-sample" onclick="resetSampleData()" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-[#9eb4aa] hover:text-[#48a97c]">
               Reset to Screenshot Data
             </button>
-            <button id="menu-clear-all" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-rose-400">
+            <button id="menu-clear-all" onclick="clearAllMatches()" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-rose-400">
               Clear All Matches
             </button>
           </div>
@@ -155,7 +162,7 @@
         </div>
         <div class="text-right">
           <label for="period-select" class="block text-[10px] tracking-wider uppercase text-[#738b81] font-semibold mb-0.5">PERIOD</label>
-          <select id="period-select" class="bg-[#182720] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-1.5 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
+          <select id="period-select" onchange="handlePeriodChange(event)" class="bg-[#182720] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-1.5 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
             <option value="2026-10">October 2026</option>
             <option value="2026-09">September 2026</option>
             <option value="2026-11">November 2026</option>
@@ -166,15 +173,15 @@
 
       <!-- Navigation Tabs -->
       <nav class="flex border-b border-[#21342a] mt-4 text-sm font-medium">
-        <button id="tab-standings" class="tab-button flex-1 pb-2.5 text-center transition-all relative font-semibold text-white">
+        <button id="tab-standings" onclick="switchTab('standings')" class="tab-button flex-1 pb-2.5 text-center transition-all relative font-semibold text-white">
           Standings
           <span class="active-indicator absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
-        <button id="tab-h2h" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
+        <button id="tab-h2h" onclick="switchTab('h2h')" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
           Head to head
           <span class="active-indicator hidden absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
-        <button id="tab-log" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
+        <button id="tab-log" onclick="switchTab('log')" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
           Log a match
           <span class="active-indicator hidden absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
@@ -193,7 +200,7 @@
         <div id="leading-card" class="bg-[#241a0e] border border-[#483315] rounded-xl p-4 shadow-lg relative overflow-hidden transition-all">
           <div class="flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-[#e5a93c] mb-1">
             <span id="leading-badge-text">LEADING · OCTOBER 2026</span>
-            <button id="btn-adjudge-banner" class="text-[10px] bg-[#3a2914] hover:bg-[#4f3719] text-[#fcd34d] px-2 py-0.5 rounded border border-[#6b4c20] transition-colors">
+            <button id="btn-adjudge-banner" onclick="triggerAdjudgeWinner(currentPeriod)" class="text-[10px] bg-[#3a2914] hover:bg-[#4f3719] text-[#fcd34d] px-2 py-0.5 rounded border border-[#6b4c20] transition-colors">
               Adjudge Winner
             </button>
           </div>
@@ -252,13 +259,13 @@
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label for="h2h-player-a" class="block text-[9px] text-[#5e776d] mb-1">PLAYER 1</label>
-              <select id="h2h-player-a" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
+              <select id="h2h-player-a" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
                 <!-- Dynamically populated -->
               </select>
             </div>
             <div>
               <label for="h2h-player-b" class="block text-[9px] text-[#5e776d] mb-1">PLAYER 2</label>
-              <select id="h2h-player-b" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
+              <select id="h2h-player-b" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
                 <!-- Dynamically populated -->
               </select>
             </div>
@@ -333,7 +340,7 @@
       <section id="view-log" class="space-y-6 hidden">
 
         <!-- Log Match Form -->
-        <form id="match-form" class="space-y-4">
+        <form id="match-form" onsubmit="handleMatchSubmit(event)" class="space-y-4">
 
           <!-- Players Selection Row -->
           <div class="grid grid-cols-2 gap-3">
@@ -353,7 +360,7 @@
 
           <!-- Swap Players Button -->
           <div class="flex justify-center -my-2">
-            <button type="button" id="btn-swap-players" class="px-3 py-1 text-[11px] bg-[#1a2b23] hover:bg-[#253b30] text-[#789085] hover:text-[#48a97c] border border-[#273d31] rounded-full flex items-center gap-1.5 transition-colors">
+            <button type="button" id="btn-swap-players" onclick="swapPlayers()" class="px-3 py-1 text-[11px] bg-[#1a2b23] hover:bg-[#253b30] text-[#789085] hover:text-[#48a97c] border border-[#273d31] rounded-full flex items-center gap-1.5 transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
               </svg>
@@ -378,11 +385,11 @@
           <!-- Quick Score Presets for Badminton -->
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <span class="text-[10px] text-[#5e776d] whitespace-nowrap font-medium">Quick:</span>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="21" data-sb="19">21-19</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="21" data-sb="15">21-15</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="22" data-sb="20">22-20</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="19" data-sb="21">19-21</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="14" data-sb="21">14-21</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScore(21, 19)">21-19</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScore(21, 15)">21-15</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScore(22, 20)">22-20</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScore(19, 21)">19-21</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScore(14, 21)">14-21</button>
           </div>
 
           <!-- Date Played -->
@@ -427,7 +434,7 @@
           </div>
 
           <!-- Add Player Form -->
-          <form id="add-player-form" class="flex gap-2 pt-1">
+          <form id="add-player-form" onsubmit="handleAddPlayerSubmit(event)" class="flex gap-2 pt-1">
             <input type="text" id="add-player-input" placeholder="Add a player" maxlength="20"
               class="flex-1 bg-[#14221b] border border-[#25392f] text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#48a97c]">
             <button type="submit" id="btn-add-player" class="px-5 py-2.5 bg-[#48a97c] hover:bg-[#54bc8b] text-[#0c1a14] font-bold text-sm rounded-xl transition-colors">
@@ -462,7 +469,7 @@
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <span>☁️</span> Firebase Realtime Sync
           </h3>
-          <button id="btn-close-firebase" class="text-[#738b81] hover:text-white">✕</button>
+          <button id="btn-close-firebase" onclick="closeFirebaseModal()" class="text-[#738b81] hover:text-white">✕</button>
         </div>
 
         <div class="text-xs text-[#9eb4aa] space-y-2 leading-relaxed">
@@ -494,10 +501,10 @@
           <div id="firebase-modal-status" class="hidden text-xs p-2 rounded-lg"></div>
 
           <div class="flex gap-2">
-            <button id="btn-save-firebase" class="flex-1 py-2.5 bg-[#48a97c] hover:bg-[#54bc8b] text-[#0c1a14] font-bold text-xs rounded-xl transition-all shadow-md">
+            <button id="btn-save-firebase" onclick="saveFirebaseConfig()" class="flex-1 py-2.5 bg-[#48a97c] hover:bg-[#54bc8b] text-[#0c1a14] font-bold text-xs rounded-xl transition-all shadow-md">
               Connect & Sync
             </button>
-            <button id="btn-disconnect-firebase" class="py-2.5 px-3 bg-[#1e2f26] hover:bg-rose-950/60 hover:text-rose-400 text-xs font-semibold text-[#8fa39a] rounded-xl transition-colors">
+            <button id="btn-disconnect-firebase" onclick="disconnectFirebase()" class="py-2.5 px-3 bg-[#1e2f26] hover:bg-rose-950/60 hover:text-rose-400 text-xs font-semibold text-[#8fa39a] rounded-xl transition-colors">
               Disconnect
             </button>
           </div>
@@ -513,10 +520,10 @@
           Are you sure you want to delete this match? This will recalculate all standings and head-to-head records.
         </p>
         <div class="flex gap-2 pt-1">
-          <button id="btn-cancel-delete" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
+          <button id="btn-cancel-delete" onclick="closeDeleteModal()" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
             Cancel
           </button>
-          <button id="btn-confirm-delete" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
+          <button id="btn-confirm-delete" onclick="confirmDeleteMatch()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
             Delete
           </button>
         </div>
@@ -531,10 +538,10 @@
           Are you sure you want to remove this player?
         </p>
         <div class="flex gap-2 pt-1">
-          <button id="btn-cancel-remove-player" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
+          <button id="btn-cancel-remove-player" onclick="closeRemovePlayerModal()" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
             Cancel
           </button>
-          <button id="btn-confirm-remove-player" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
+          <button id="btn-confirm-remove-player" onclick="confirmRemovePlayer()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
             Remove
           </button>
         </div>
@@ -557,7 +564,7 @@
         <p id="modal-adjudge-reason" class="text-xs text-[#b8955a] italic leading-relaxed">
           Winner adjudged by most wins!
         </p>
-        <button id="btn-close-adjudge" class="w-full py-2.5 bg-[#e5a93c] hover:bg-[#f59e0b] text-[#140e05] font-bold text-xs uppercase tracking-wider rounded-xl transition-colors">
+        <button id="btn-close-adjudge" onclick="closeAdjudgeModal()" class="w-full py-2.5 bg-[#e5a93c] hover:bg-[#f59e0b] text-[#140e05] font-bold text-xs uppercase tracking-wider rounded-xl transition-colors">
           Awesome!
         </button>
       </div>
@@ -570,7 +577,7 @@
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <span>🏆</span> Monthly Champions
           </h3>
-          <button id="btn-close-history" class="text-[#738b81] hover:text-white">✕</button>
+          <button id="btn-close-history" onclick="closeHistoryModal()" class="text-[#738b81] hover:text-white">✕</button>
         </div>
         <div id="champions-list-container" class="space-y-2 max-h-60 overflow-y-auto">
           <!-- Dynamically populated -->
@@ -595,18 +602,8 @@
     const STORAGE_KEY = 'badminton_101_app_state_v1';
     const FIREBASE_CONFIG_KEY = 'badminton_101_firebase_config_v1';
 
-    // OPTIONAL: You can also hardcode your firebaseConfig here before pushing to GitHub:
-    const EMBEDDED_FIREBASE_CONFIG = // Import the functions you need from the SDKs you nee
-    {
-  apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
-  authDomain: "badminton-101-57f82.firebaseapp.com",
-  databaseURL: "https://badminton-101-57f82-default-rtdb.firebaseio.com/"
-  projectId: "badminton-101-57f82",
-  storageBucket: "badminton-101-57f82.firebasestorage.app",
-  messagingSenderId: "60091223084",
-  appId: "1:60091223084:web:b38f1d5ec5bb7b90f91589",
-  measurementId: "G-45P104NQQT"
-};
+    // OPTIONAL: Hardcode your firebaseConfig here before pushing to GitHub
+    const EMBEDDED_FIREBASE_CONFIG = null;
 
     // Default Seed Data matching the user's screenshots exactly:
     const DEFAULT_DATA = {
@@ -658,7 +655,7 @@
           return;
         }
 
-        if (!firebase.apps.length) {
+        if (!firebase.apps || !firebase.apps.length) {
           firebaseApp = firebase.initializeApp(config);
         } else {
           firebaseApp = firebase.app();
@@ -667,18 +664,18 @@
         firebaseDb = firebase.database();
         cloudDbRef = firebaseDb.ref('badminton_shared_data');
 
-        // Real-time listener for incoming changes from friends!
+        // Real-time listener for incoming changes from friends
         cloudDbRef.on('value', (snapshot) => {
           const val = snapshot.val();
           if (val && Array.isArray(val.players) && Array.isArray(val.matches)) {
             isRemoteUpdate = true;
-            state = val;
+            state = ensureStateDefaults(val);
             saveStateLocalOnly();
             renderAll();
             isRemoteUpdate = false;
             updateCloudStatusBadge(true, 'Live Synced');
           } else if (!val) {
-            // First time connection: initialize cloud database with initial state
+            // First time connection: upload local state to cloud
             cloudDbRef.set(state);
             updateCloudStatusBadge(true, 'Live Synced');
           }
@@ -766,7 +763,7 @@
           osc.start(now);
           osc.stop(now + 0.2);
         } else if (type === 'win') {
-          const notes = [523.25, 659.25, 783.99, 1046.50]; // C E G C
+          const notes = [523.25, 659.25, 783.99, 1046.50];
           notes.forEach((freq, idx) => {
             const o = ctx.createOscillator();
             const g = ctx.createGain();
@@ -785,13 +782,24 @@
     }
 
     // --- State Persistence ---
+    function ensureStateDefaults(s) {
+      if (!s || typeof s !== 'object') {
+        s = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
+      if (!Array.isArray(s.players)) s.players = ['Manish', 'Nitesh', 'Pranav'];
+      if (!Array.isArray(s.matches)) s.matches = [];
+      if (!s.adjudgedWinners || typeof s.adjudgedWinners !== 'object') s.adjudgedWinners = {};
+      if (typeof s.soundEnabled !== 'boolean') s.soundEnabled = true;
+      return s;
+    }
+
     function loadState() {
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed && Array.isArray(parsed.players) && Array.isArray(parsed.matches)) {
-            return parsed;
+            return ensureStateDefaults(parsed);
           }
         }
       } catch (e) {
@@ -962,6 +970,7 @@
 
       const sortedPeriods = Array.from(periods).sort().reverse();
       const select = document.getElementById('period-select');
+      if (!select) return;
       select.innerHTML = '';
 
       sortedPeriods.forEach(p => {
@@ -984,9 +993,10 @@
       const matches = getPeriodMatches(currentPeriod);
       const periodLabel = getPeriodLabel(currentPeriod).toUpperCase();
 
-      const isCompleted = state.adjudgedWinners[currentPeriod];
+      const isCompleted = state.adjudgedWinners && state.adjudgedWinners[currentPeriod];
       const badgeText = isCompleted ? `CHAMPION · ${periodLabel}` : `LEADING · ${periodLabel}`;
-      document.getElementById('leading-badge-text').textContent = badgeText;
+      const badgeEl = document.getElementById('leading-badge-text');
+      if (badgeEl) badgeEl.textContent = badgeText;
 
       const leadingCard = document.getElementById('leading-card');
       const leadingName = document.getElementById('leading-player-name');
@@ -995,25 +1005,27 @@
 
       if (standings.length > 0 && standings[0].played > 0) {
         const leader = standings[0];
-        leadingName.textContent = leader.name;
-        leadingStats.textContent = `${leader.wins} wins · ${leader.ptsWon} points won`;
+        if (leadingName) leadingName.textContent = leader.name;
+        if (leadingStats) leadingStats.textContent = `${leader.wins} wins · ${leader.ptsWon} points won`;
 
-        if (standings.length > 1 && standings[1].wins === leader.wins && leader.wins > 0) {
-          leadingTieNote.classList.remove('hidden');
-          leadingTieNote.textContent = `Wins tied! Leading on points (${leader.ptsWon} vs ${standings[1].ptsWon})`;
-        } else {
-          leadingTieNote.classList.add('hidden');
+        if (leadingTieNote) {
+          if (standings.length > 1 && standings[1].wins === leader.wins && leader.wins > 0) {
+            leadingTieNote.classList.remove('hidden');
+            leadingTieNote.textContent = `Wins tied! Leading on points (${leader.ptsWon} vs ${standings[1].ptsWon})`;
+          } else {
+            leadingTieNote.classList.add('hidden');
+          }
         }
-
-        leadingCard.classList.remove('opacity-60');
+        if (leadingCard) leadingCard.classList.remove('opacity-60');
       } else {
-        leadingName.textContent = state.players[0] || 'No Players';
-        leadingStats.textContent = '0 wins · 0 points won';
-        leadingTieNote.classList.add('hidden');
-        leadingCard.classList.add('opacity-60');
+        if (leadingName) leadingName.textContent = state.players[0] || 'No Players';
+        if (leadingStats) leadingStats.textContent = '0 wins · 0 points won';
+        if (leadingTieNote) leadingTieNote.classList.add('hidden');
+        if (leadingCard) leadingCard.classList.add('opacity-60');
       }
 
       const tbody = document.getElementById('standings-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       const visiblePlayers = standings.filter(s => s.played > 0 || state.players.includes(s.name));
@@ -1042,15 +1054,21 @@
         tbody.appendChild(row);
       });
 
-      document.getElementById('stat-total-matches').textContent = matches.length;
+      const stMatches = document.getElementById('stat-total-matches');
+      if (stMatches) stMatches.textContent = matches.length;
+
       const totalPoints = matches.reduce((acc, m) => acc + Number(m.scoreA) + Number(m.scoreB), 0);
-      document.getElementById('stat-total-points').textContent = totalPoints;
-      document.getElementById('stat-avg-points').textContent = matches.length > 0 ? (totalPoints / matches.length).toFixed(1) : '0';
+      const stPts = document.getElementById('stat-total-points');
+      if (stPts) stPts.textContent = totalPoints;
+
+      const stAvg = document.getElementById('stat-avg-points');
+      if (stAvg) stAvg.textContent = matches.length > 0 ? (totalPoints / matches.length).toFixed(1) : '0';
     }
 
     function renderH2H() {
       const playerASelect = document.getElementById('h2h-player-a');
       const playerBSelect = document.getElementById('h2h-player-b');
+      if (!playerASelect || !playerBSelect) return;
 
       const currentA = playerASelect.value;
       const currentB = playerBSelect.value;
@@ -1087,30 +1105,47 @@
     }
 
     function updateH2HView() {
-      const pA = document.getElementById('h2h-player-a').value;
-      const pB = document.getElementById('h2h-player-b').value;
+      const pAEl = document.getElementById('h2h-player-a');
+      const pBEl = document.getElementById('h2h-player-b');
+      if (!pAEl || !pBEl) return;
+
+      const pA = pAEl.value;
+      const pB = pBEl.value;
+
+      const card = document.getElementById('h2h-card');
+      const nameA = document.getElementById('h2h-name-a');
+      const nameB = document.getElementById('h2h-name-b');
+      const winsA = document.getElementById('h2h-wins-a');
+      const winsB = document.getElementById('h2h-wins-b');
+      const matchesCount = document.getElementById('h2h-matches-count');
+      const matchesList = document.getElementById('h2h-matches-list');
 
       if (!pA || !pB || pA === pB) {
-        document.getElementById('h2h-card').classList.add('opacity-50');
-        document.getElementById('h2h-name-a').textContent = pA || 'Player 1';
-        document.getElementById('h2h-name-b').textContent = pB || 'Player 2';
-        document.getElementById('h2h-wins-a').textContent = '0';
-        document.getElementById('h2h-wins-b').textContent = '0';
-        document.getElementById('h2h-matches-count').textContent = '0 MATCHES';
-        document.getElementById('h2h-matches-list').innerHTML = '<div class="text-xs text-[#6e857b] py-2 text-center">Select two different players</div>';
+        if (card) card.classList.add('opacity-50');
+        if (nameA) nameA.textContent = pA || 'Player 1';
+        if (nameB) nameB.textContent = pB || 'Player 2';
+        if (winsA) winsA.textContent = '0';
+        if (winsB) winsB.textContent = '0';
+        if (matchesCount) matchesCount.textContent = '0 MATCHES';
+        if (matchesList) matchesList.innerHTML = '<div class="text-xs text-[#6e857b] py-2 text-center">Select two different players</div>';
         return;
       }
 
-      document.getElementById('h2h-card').classList.remove('opacity-50');
+      if (card) card.classList.remove('opacity-50');
       const h2h = calculateH2H(pA, pB, currentPeriod);
 
-      document.getElementById('h2h-name-a').textContent = pA;
-      document.getElementById('h2h-name-b').textContent = pB;
-      document.getElementById('h2h-wins-a').textContent = h2h.winsA;
-      document.getElementById('h2h-wins-b').textContent = h2h.winsB;
-      document.getElementById('h2h-rate-a').textContent = `${h2h.rateA}% win rate`;
-      document.getElementById('h2h-rate-b').textContent = `${h2h.rateB}% win rate`;
-      document.getElementById('h2h-matches-count').textContent = `${h2h.total} ${h2h.total === 1 ? 'MATCH' : 'MATCHES'}`;
+      if (nameA) nameA.textContent = pA;
+      if (nameB) nameB.textContent = pB;
+      if (winsA) winsA.textContent = h2h.winsA;
+      if (winsB) winsB.textContent = h2h.winsB;
+
+      const rateAEl = document.getElementById('h2h-rate-a');
+      if (rateAEl) rateAEl.textContent = `${h2h.rateA}% win rate`;
+
+      const rateBEl = document.getElementById('h2h-rate-b');
+      if (rateBEl) rateBEl.textContent = `${h2h.rateB}% win rate`;
+
+      if (matchesCount) matchesCount.textContent = `${h2h.total} ${h2h.total === 1 ? 'MATCH' : 'MATCHES'}`;
 
       let barPercentA = 50;
       let barPercentB = 50;
@@ -1118,20 +1153,27 @@
         barPercentA = Math.round((h2h.winsA / h2h.total) * 100);
         barPercentB = 100 - barPercentA;
       }
-      document.getElementById('h2h-bar-a').style.width = `${barPercentA}%`;
-      document.getElementById('h2h-bar-b').style.width = `${barPercentB}%`;
-      document.getElementById('h2h-pts-a').textContent = `${h2h.ptsA} pts`;
-      document.getElementById('h2h-pts-b').textContent = `${h2h.ptsB} pts`;
+      const barA = document.getElementById('h2h-bar-a');
+      const barB = document.getElementById('h2h-bar-b');
+      if (barA) barA.style.width = `${barPercentA}%`;
+      if (barB) barB.style.width = `${barPercentB}%`;
+
+      const ptsAEl = document.getElementById('h2h-pts-a');
+      const ptsBEl = document.getElementById('h2h-pts-b');
+      if (ptsAEl) ptsAEl.textContent = `${h2h.ptsA} pts`;
+      if (ptsBEl) ptsBEl.textContent = `${h2h.ptsB} pts`;
 
       const diff = h2h.ptsA - h2h.ptsB;
       let diffText = 'Tied on points';
       if (diff > 0) diffText = `+${diff} for ${pA}`;
       else if (diff < 0) diffText = `+${Math.abs(diff)} for ${pB}`;
-      document.getElementById('h2h-diff').textContent = diffText;
+      const diffEl = document.getElementById('h2h-diff');
+      if (diffEl) diffEl.textContent = diffText;
 
       const avgA = h2h.total > 0 ? (h2h.ptsA / h2h.total).toFixed(1) : '0';
       const avgB = h2h.total > 0 ? (h2h.ptsB / h2h.total).toFixed(1) : '0';
-      document.getElementById('h2h-avg').textContent = `${avgA} vs ${avgB}`;
+      const avgEl = document.getElementById('h2h-avg');
+      if (avgEl) avgEl.textContent = `${avgA} vs ${avgB}`;
 
       let streakPlayer = null;
       let streakCount = 0;
@@ -1147,39 +1189,44 @@
           break;
         }
       }
-      document.getElementById('h2h-streak').textContent = streakPlayer ? `${streakPlayer} (${streakCount} ${streakCount === 1 ? 'win' : 'wins'})` : 'None';
+      const streakEl = document.getElementById('h2h-streak');
+      if (streakEl) streakEl.textContent = streakPlayer ? `${streakPlayer} (${streakCount} ${streakCount === 1 ? 'win' : 'wins'})` : 'None';
 
-      const listContainer = document.getElementById('h2h-matches-list');
-      listContainer.innerHTML = '';
-
-      if (h2h.matches.length === 0) {
-        listContainer.innerHTML = '<div class="text-xs text-[#6e857b] py-3 text-center bg-[#14221b] border border-[#22352c] rounded-xl">No matches played between them in this period.</div>';
-      } else {
-        const sorted = [...h2h.matches].reverse();
-        sorted.forEach(m => {
-          const isWinnerA = Number(m.scoreA) > Number(m.scoreB);
-          const item = document.createElement('div');
-          item.className = 'flex items-center justify-between p-2.5 bg-[#14221b] border border-[#1e2f28] rounded-xl text-xs';
-          item.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="font-bold ${m.playerA === (isWinnerA ? m.playerA : m.playerB) ? 'text-white' : 'text-[#8fa39a]'}">${escapeHtml(m.playerA)}</span>
-              <span class="font-bebas text-sm text-[#e5a93c] px-1.5 py-0.5 rounded bg-[#1d2a23]">${m.scoreA} - ${m.scoreB}</span>
-              <span class="font-bold ${m.playerB === (isWinnerA ? m.playerA : m.playerB) ? 'text-white' : 'text-[#8fa39a]'}">${escapeHtml(m.playerB)}</span>
-            </div>
-            <span class="text-[10px] text-[#6e857b]">${formatDateDisplay(m.date)}</span>
-          `;
-          listContainer.appendChild(item);
-        });
+      if (matchesList) {
+        matchesList.innerHTML = '';
+        if (h2h.matches.length === 0) {
+          matchesList.innerHTML = '<div class="text-xs text-[#6e857b] py-3 text-center bg-[#14221b] border border-[#22352c] rounded-xl">No matches played between them in this period.</div>';
+        } else {
+          const sorted = [...h2h.matches].reverse();
+          sorted.forEach(m => {
+            const isWinnerA = Number(m.scoreA) > Number(m.scoreB);
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between p-2.5 bg-[#14221b] border border-[#1e2f28] rounded-xl text-xs';
+            item.innerHTML = `
+              <div class="flex items-center gap-2">
+                <span class="font-bold ${m.playerA === (isWinnerA ? m.playerA : m.playerB) ? 'text-white' : 'text-[#8fa39a]'}">${escapeHtml(m.playerA)}</span>
+                <span class="font-bebas text-sm text-[#e5a93c] px-1.5 py-0.5 rounded bg-[#1d2a23]">${m.scoreA} - ${m.scoreB}</span>
+                <span class="font-bold ${m.playerB === (isWinnerA ? m.playerA : m.playerB) ? 'text-white' : 'text-[#8fa39a]'}">${escapeHtml(m.playerB)}</span>
+              </div>
+              <span class="text-[10px] text-[#6e857b]">${formatDateDisplay(m.date)}</span>
+            `;
+            matchesList.appendChild(item);
+          });
+        }
       }
     }
 
     function renderMatchesList() {
       const matches = getPeriodMatches(currentPeriod);
       const periodLabel = getPeriodLabel(currentPeriod).toUpperCase();
-      document.getElementById('matches-header-title').textContent = `MATCHES · ${periodLabel} (${matches.length})`;
-      document.getElementById('matches-count-label').textContent = `${matches.length} matches`;
+      const titleEl = document.getElementById('matches-header-title');
+      if (titleEl) titleEl.textContent = `MATCHES · ${periodLabel} (${matches.length})`;
+      
+      const countEl = document.getElementById('matches-count-label');
+      if (countEl) countEl.textContent = `${matches.length} matches`;
 
       const container = document.getElementById('matches-list-container');
+      if (!container) return;
       container.innerHTML = '';
 
       if (matches.length === 0) {
@@ -1206,24 +1253,18 @@
             </div>
             <div class="text-xs text-[#6e857b]">${formatDateDisplay(m.date)}</div>
           </div>
-          <button data-match-id="${m.id}" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
+          <button type="button" onclick="openDeleteModal('${m.id}')" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
             Delete
           </button>
         `;
 
         container.appendChild(item);
       });
-
-      container.querySelectorAll('.btn-delete-match').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const matchId = e.currentTarget.getAttribute('data-match-id');
-          openDeleteModal(matchId);
-        });
-      });
     }
 
     function renderPlayerChips() {
       const container = document.getElementById('players-chips-container');
+      if (!container) return;
       container.innerHTML = '';
 
       state.players.forEach(p => {
@@ -1231,24 +1272,18 @@
         chip.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#182721] border border-[#25392f] text-xs font-medium text-white';
         chip.innerHTML = `
           <span>${escapeHtml(p)}</span>
-          <button data-player="${escapeHtml(p)}" class="btn-remove-player text-[#738b81] hover:text-rose-400 text-xs ml-1 transition-colors">
+          <button type="button" onclick="openRemovePlayerModal('${escapeHtml(p)}')" class="btn-remove-player text-[#738b81] hover:text-rose-400 text-xs ml-1 transition-colors">
             Remove
           </button>
         `;
         container.appendChild(chip);
-      });
-
-      container.querySelectorAll('.btn-remove-player').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const player = e.currentTarget.getAttribute('data-player');
-          openRemovePlayerModal(player);
-        });
       });
     }
 
     function populateFormPlayers() {
       const selectA = document.getElementById('player-a-select');
       const selectB = document.getElementById('player-b-select');
+      if (!selectA || !selectB) return;
 
       const prevA = selectA.value;
       const prevB = selectB.value;
@@ -1297,21 +1332,194 @@
         .replace(/'/g, '&#039;');
     }
 
-    // --- Modal & Action Handlers ---
+    // --- Interactive Action Handlers (Globally Accessible) ---
+
+    function switchTab(tabId) {
+      activeTab = tabId;
+
+      const tabs = [
+        { id: 'standings', btn: document.getElementById('tab-standings'), view: document.getElementById('view-standings') },
+        { id: 'h2h', btn: document.getElementById('tab-h2h'), view: document.getElementById('view-h2h') },
+        { id: 'log', btn: document.getElementById('tab-log'), view: document.getElementById('view-log') },
+      ];
+
+      tabs.forEach(t => {
+        if (!t.btn || !t.view) return;
+        const isActive = t.id === tabId;
+        const ind = t.btn.querySelector('.active-indicator');
+        if (isActive) {
+          t.btn.classList.add('text-white', 'font-semibold');
+          t.btn.classList.remove('text-[#789085]', 'font-medium');
+          if (ind) ind.classList.remove('hidden');
+          t.view.classList.remove('hidden');
+        } else {
+          t.btn.classList.remove('text-white', 'font-semibold');
+          t.btn.classList.add('text-[#789085]', 'font-medium');
+          if (ind) ind.classList.add('hidden');
+          t.view.classList.add('hidden');
+        }
+      });
+
+      if (tabId === 'standings') renderStandings();
+      if (tabId === 'h2h') renderH2H();
+      if (tabId === 'log') {
+        renderMatchesList();
+        renderPlayerChips();
+      }
+    }
+
+    function handlePeriodChange(e) {
+      currentPeriod = e.target.value;
+      renderStandings();
+      renderH2H();
+      renderMatchesList();
+    }
+
+    function toggleOptionsMenu(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.toggle('hidden');
+    }
+
+    function swapPlayers() {
+      const selA = document.getElementById('player-a-select');
+      const selB = document.getElementById('player-b-select');
+      if (!selA || !selB) return;
+      const valA = selA.value;
+      const valB = selB.value;
+      selA.value = valB;
+      selB.value = valA;
+
+      const scoreA = document.getElementById('score-a-input');
+      const scoreB = document.getElementById('score-b-input');
+      if (scoreA && scoreB) {
+        const sValA = scoreA.value;
+        scoreA.value = scoreB.value;
+        scoreB.value = sValA;
+      }
+    }
+
+    function quickScore(sa, sb) {
+      const scoreA = document.getElementById('score-a-input');
+      const scoreB = document.getElementById('score-b-input');
+      if (scoreA) scoreA.value = sa;
+      if (scoreB) scoreB.value = sb;
+    }
+
+    function handleMatchSubmit(e) {
+      if (e) e.preventDefault();
+      const errEl = document.getElementById('form-error');
+      if (errEl) errEl.classList.add('hidden');
+
+      const selA = document.getElementById('player-a-select');
+      const selB = document.getElementById('player-b-select');
+      const scoreAEl = document.getElementById('score-a-input');
+      const scoreBEl = document.getElementById('score-b-input');
+      const dateEl = document.getElementById('date-played-input');
+
+      if (!selA || !selB || !scoreAEl || !scoreBEl || !dateEl) return;
+
+      const pA = selA.value;
+      const pB = selB.value;
+      const sA = parseInt(scoreAEl.value, 10);
+      const sB = parseInt(scoreBEl.value, 10);
+      const dateVal = dateEl.value;
+
+      if (!pA || !pB) {
+        if (errEl) { errEl.textContent = 'Please select both players.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      if (pA === pB) {
+        if (errEl) { errEl.textContent = 'Player A and Player B cannot be the same person.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      if (isNaN(sA) || isNaN(sB) || sA < 0 || sB < 0) {
+        if (errEl) { errEl.textContent = 'Please enter valid non-negative scores.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      if (sA === sB) {
+        if (errEl) { errEl.textContent = 'Badminton games cannot end in a tie. One player must win.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      if (!dateVal) {
+        if (errEl) { errEl.textContent = 'Please select the date played.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      const newMatch = {
+        id: 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        playerA: pA,
+        playerB: pB,
+        scoreA: sA,
+        scoreB: sB,
+        date: dateVal
+      };
+
+      state.matches.push(newMatch);
+      saveState();
+
+      const matchMonth = dateVal.substring(0, 7);
+      currentPeriod = matchMonth;
+
+      scoreAEl.value = '';
+      scoreBEl.value = '';
+
+      playSound('save');
+      renderAll();
+      showToast(`Match saved: ${pA} ${sA} - ${sB} ${pB}`);
+    }
+
+    function handleAddPlayerSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('add-player-input');
+      const errEl = document.getElementById('player-error');
+      if (errEl) errEl.classList.add('hidden');
+      if (!input) return;
+
+      const name = input.value.trim();
+      if (!name) return;
+
+      if (state.players.some(p => p.toLowerCase() === name.toLowerCase())) {
+        if (errEl) { errEl.textContent = `Player "${name}" already exists.`; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      state.players.push(name);
+      saveState();
+      input.value = '';
+      renderAll();
+      showToast(`Player "${name}" added!`);
+    }
 
     function openDeleteModal(matchId) {
       matchPendingDeleteId = matchId;
       const match = state.matches.find(m => m.id === matchId);
-      if (match) {
-        document.getElementById('delete-modal-desc').textContent = 
-          `Delete match between ${match.playerA} and ${match.playerB} (${match.scoreA}-${match.scoreB}) on ${formatDateDisplay(match.date)}?`;
+      const descEl = document.getElementById('delete-modal-desc');
+      if (match && descEl) {
+        descEl.textContent = `Delete match between ${match.playerA} and ${match.playerB} (${match.scoreA}-${match.scoreB}) on ${formatDateDisplay(match.date)}?`;
       }
-      document.getElementById('modal-delete').classList.remove('hidden');
+      const modal = document.getElementById('modal-delete');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeDeleteModal() {
       matchPendingDeleteId = null;
-      document.getElementById('modal-delete').classList.add('hidden');
+      const modal = document.getElementById('modal-delete');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmDeleteMatch() {
+      if (!matchPendingDeleteId) return;
+      state.matches = state.matches.filter(m => m.id !== matchPendingDeleteId);
+      saveState();
+      playSound('delete');
+      closeDeleteModal();
+      renderAll();
+      showToast('Match deleted', '🗑️');
     }
 
     function openRemovePlayerModal(playerName) {
@@ -1321,13 +1529,25 @@
       if (matchCount > 0) {
         text += ` They have ${matchCount} match records which will still remain in historical records.`;
       }
-      document.getElementById('remove-player-desc').textContent = text;
-      document.getElementById('modal-remove-player').classList.remove('hidden');
+      const descEl = document.getElementById('remove-player-desc');
+      if (descEl) descEl.textContent = text;
+      const modal = document.getElementById('modal-remove-player');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeRemovePlayerModal() {
       playerPendingRemove = null;
-      document.getElementById('modal-remove-player').classList.add('hidden');
+      const modal = document.getElementById('modal-remove-player');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmRemovePlayer() {
+      if (!playerPendingRemove) return;
+      state.players = state.players.filter(p => p !== playerPendingRemove);
+      saveState();
+      closeRemovePlayerModal();
+      renderAll();
+      showToast(`Player removed`, '🗑️');
     }
 
     function triggerAdjudgeWinner(periodKey) {
@@ -1343,6 +1563,9 @@
       const winner = standings[0];
       const isTie = standings.length > 1 && standings[1].wins === winner.wins;
 
+      if (!state.adjudgedWinners || typeof state.adjudgedWinners !== 'object') {
+        state.adjudgedWinners = {};
+      }
       state.adjudgedWinners[periodKey] = {
         player: winner.name,
         wins: winner.wins,
@@ -1366,219 +1589,50 @@
 
       playSound('win');
 
-      document.getElementById('modal-adjudge-period').textContent = `${periodLabel.toUpperCase()} CHAMPION`;
-      document.getElementById('modal-adjudge-winner').textContent = winner.name;
-      document.getElementById('modal-adjudge-details').innerHTML = `
-        <div class="font-bold text-sm text-white">${winner.wins} Wins · ${winner.ptsWon} Total Points</div>
-        <div class="text-[11px] text-[#e5a93c]">${winner.played} Matches Played (${winner.winPct}% Win Rate)</div>
-      `;
+      const periodEl = document.getElementById('modal-adjudge-period');
+      if (periodEl) periodEl.textContent = `${periodLabel.toUpperCase()} CHAMPION`;
+
+      const winnerEl = document.getElementById('modal-adjudge-winner');
+      if (winnerEl) winnerEl.textContent = winner.name;
+
+      const detailsEl = document.getElementById('modal-adjudge-details');
+      if (detailsEl) {
+        detailsEl.innerHTML = `
+          <div class="font-bold text-sm text-white">${winner.wins} Wins · ${winner.ptsWon} Total Points</div>
+          <div class="text-[11px] text-[#e5a93c]">${winner.played} Matches Played (${winner.winPct}% Win Rate)</div>
+        `;
+      }
 
       let reason = 'Winner adjudged by having the most wins in the month!';
       if (isTie) {
         reason = `Tied on ${winner.wins} wins with ${standings[1].name}! ${winner.name} takes the month with higher cumulative points won (${winner.ptsWon} vs ${standings[1].ptsWon}).`;
       }
-      document.getElementById('modal-adjudge-reason').textContent = reason;
+      const reasonEl = document.getElementById('modal-adjudge-reason');
+      if (reasonEl) reasonEl.textContent = reason;
 
-      document.getElementById('modal-adjudge').classList.remove('hidden');
+      const modal = document.getElementById('modal-adjudge');
+      if (modal) modal.classList.remove('hidden');
       renderStandings();
     }
 
-    function showToast(msg, icon = '✓') {
-      const toast = document.getElementById('toast');
-      document.getElementById('toast-icon').textContent = icon;
-      document.getElementById('toast-msg').textContent = msg;
-      toast.classList.remove('hidden');
-      setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 2500);
+    function closeAdjudgeModal() {
+      const modal = document.getElementById('modal-adjudge');
+      if (modal) modal.classList.add('hidden');
     }
 
-    // --- Tab Switching ---
-    function switchTab(tabId) {
-      activeTab = tabId;
-
-      const tabs = [
-        { id: 'standings', btn: document.getElementById('tab-standings'), view: document.getElementById('view-standings') },
-        { id: 'h2h', btn: document.getElementById('tab-h2h'), view: document.getElementById('view-h2h') },
-        { id: 'log', btn: document.getElementById('tab-log'), view: document.getElementById('view-log') },
-      ];
-
-      tabs.forEach(t => {
-        const isActive = t.id === tabId;
-        if (isActive) {
-          t.btn.classList.add('text-white', 'font-semibold');
-          t.btn.classList.remove('text-[#789085]', 'font-medium');
-          t.btn.querySelector('.active-indicator').classList.remove('hidden');
-          t.view.classList.remove('hidden');
-        } else {
-          t.btn.classList.remove('text-white', 'font-semibold');
-          t.btn.classList.add('text-[#789085]', 'font-medium');
-          t.btn.querySelector('.active-indicator').classList.add('hidden');
-          t.view.classList.add('hidden');
-        }
-      });
-
-      if (tabId === 'standings') renderStandings();
-      if (tabId === 'h2h') renderH2H();
-      if (tabId === 'log') {
-        renderMatchesList();
-        renderPlayerChips();
-      }
+    function handleAdjudgeMenuClick() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      triggerAdjudgeWinner(currentPeriod);
     }
 
-    // --- Initialization & Event Listeners ---
-    document.addEventListener('DOMContentLoaded', () => {
-
-      const dateInput = document.getElementById('date-played-input');
-      const today = new Date();
-      const yyyy = today.getFullYear() === 2026 ? '2026' : '2026';
-      dateInput.value = `${yyyy}-10-19`;
-
-      // Initialize UI
-      renderAll();
-
-      // Initialize Firebase Connection
-      initFirebase();
-
-      // Live Time Clock ticker
-      setInterval(updateLiveTime, 10000);
-
-      // Period Select Handler
-      document.getElementById('period-select').addEventListener('change', (e) => {
-        currentPeriod = e.target.value;
-        renderStandings();
-        renderH2H();
-        renderMatchesList();
-      });
-
-      // Tabs click
-      document.getElementById('tab-standings').addEventListener('click', () => switchTab('standings'));
-      document.getElementById('tab-h2h').addEventListener('click', () => switchTab('h2h'));
-      document.getElementById('tab-log').addEventListener('click', () => switchTab('log'));
-
-      // Home / Close Button
-      document.getElementById('btn-home').addEventListener('click', () => {
-        switchTab('standings');
-      });
-
-      // Cloud Status Button Click -> opens Firebase modal
-      document.getElementById('btn-cloud-status').addEventListener('click', () => {
-        const modal = document.getElementById('modal-firebase');
-        modal.classList.remove('hidden');
-        const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
-        if (stored) {
-          document.getElementById('firebase-config-input').value = stored;
-        }
-      });
-
-      // Options: Firebase Setup Menu Item
-      document.getElementById('menu-firebase-setup').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        const modal = document.getElementById('modal-firebase');
-        modal.classList.remove('hidden');
-        const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
-        if (stored) {
-          document.getElementById('firebase-config-input').value = stored;
-        }
-      });
-
-      document.getElementById('btn-close-firebase').addEventListener('click', () => {
-        document.getElementById('modal-firebase').classList.add('hidden');
-      });
-
-      // Save Firebase Config
-      document.getElementById('btn-save-firebase').addEventListener('click', () => {
-        const input = document.getElementById('firebase-config-input').value.trim();
-        const statusEl = document.getElementById('firebase-modal-status');
-        statusEl.classList.remove('hidden');
-
-        if (!input) {
-          statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
-          statusEl.textContent = 'Please paste your Firebase config snippet or JSON.';
-          return;
-        }
-
-        try {
-          let config = null;
-          // Extract JSON or JavaScript object literal from snippet
-          if (input.startsWith('{') && input.endsWith('}')) {
-            config = JSON.parse(input);
-          } else {
-            // Regex match keys from `const firebaseConfig = { ... }`
-            const apiKey = (input.match(/apiKey:\s*["']([^"']+)["']/) || [])[1];
-            const databaseURL = (input.match(/databaseURL:\s*["']([^"']+)["']/) || [])[1];
-            const projectId = (input.match(/projectId:\s*["']([^"']+)["']/) || [])[1];
-            const authDomain = (input.match(/authDomain:\s*["']([^"']+)["']/) || [])[1];
-            const appId = (input.match(/appId:\s*["']([^"']+)["']/) || [])[1];
-
-            if (apiKey) {
-              config = { apiKey, databaseURL, projectId, authDomain, appId };
-            }
-          }
-
-          if (!config || !config.apiKey) {
-            statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
-            statusEl.textContent = 'Could not find a valid apiKey in the pasted config. Please check the format.';
-            return;
-          }
-
-          localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(config, null, 2));
-          statusEl.className = 'text-xs p-2 rounded-lg bg-emerald-950/60 text-emerald-300';
-          statusEl.textContent = 'Connecting to Firebase...';
-
-          initFirebase();
-          showToast('Firebase configured & connected! ☁️');
-          setTimeout(() => {
-            document.getElementById('modal-firebase').classList.add('hidden');
-          }, 1200);
-        } catch (e) {
-          statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
-          statusEl.textContent = 'Invalid format. Please paste the config object from Firebase.';
-        }
-      });
-
-      // Disconnect Firebase
-      document.getElementById('btn-disconnect-firebase').addEventListener('click', () => {
-        localStorage.removeItem(FIREBASE_CONFIG_KEY);
-        isCloudConnected = false;
-        if (cloudDbRef) {
-          cloudDbRef.off();
-          cloudDbRef = null;
-        }
-        document.getElementById('firebase-config-input').value = '';
-        updateCloudStatusBadge(false, 'Local Mode');
-        showToast('Disconnected from cloud. Using local storage.', 'ℹ️');
-        document.getElementById('modal-firebase').classList.add('hidden');
-      });
-
-      // Options Menu Toggle
-      const optionsBtn = document.getElementById('btn-options');
-      const optionsDropdown = document.getElementById('options-dropdown');
-      optionsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        optionsDropdown.classList.toggle('hidden');
-      });
-
-      document.addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-      });
-
-      // Options: Adjudge Winner
-      document.getElementById('menu-adjudge-winner').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        triggerAdjudgeWinner(currentPeriod);
-      });
-
-      document.getElementById('btn-adjudge-banner').addEventListener('click', () => {
-        triggerAdjudgeWinner(currentPeriod);
-      });
-
-      // Options: Winner History
-      document.getElementById('menu-winner-history').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        const container = document.getElementById('champions-list-container');
+    function openHistoryModal() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const container = document.getElementById('champions-list-container');
+      if (container) {
         container.innerHTML = '';
-        const keys = Object.keys(state.adjudgedWinners);
+        const keys = Object.keys(state.adjudgedWinners || {});
 
         if (keys.length === 0) {
           container.innerHTML = '<div class="text-xs text-[#738b81] py-4 text-center">No past month champions crowned yet. Use "Adjudge Winner" to crown a champion!</div>';
@@ -1600,232 +1654,253 @@
             container.appendChild(div);
           });
         }
-        document.getElementById('modal-history').classList.remove('hidden');
-      });
+      }
+      const modal = document.getElementById('modal-history');
+      if (modal) modal.classList.remove('hidden');
+    }
 
-      document.getElementById('btn-close-history').addEventListener('click', () => {
-        document.getElementById('modal-history').classList.add('hidden');
-      });
+    function closeHistoryModal() {
+      const modal = document.getElementById('modal-history');
+      if (modal) modal.classList.add('hidden');
+    }
 
-      // Options: Sound Toggle
-      document.getElementById('menu-toggle-sound').addEventListener('click', () => {
-        state.soundEnabled = !state.soundEnabled;
-        saveState();
-        document.getElementById('sound-status-badge').textContent = state.soundEnabled ? 'ON' : 'OFF';
-        document.getElementById('sound-status-badge').className = state.soundEnabled 
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      saveState();
+      const badge = document.getElementById('sound-status-badge');
+      if (badge) {
+        badge.textContent = state.soundEnabled ? 'ON' : 'OFF';
+        badge.className = state.soundEnabled 
           ? 'text-xs px-2 py-0.5 rounded bg-[#203429] text-[#48a97c]' 
           : 'text-xs px-2 py-0.5 rounded bg-[#332222] text-rose-400';
-        showToast(`Sound ${state.soundEnabled ? 'Enabled' : 'Disabled'}`);
-      });
+      }
+      showToast(`Sound ${state.soundEnabled ? 'Enabled' : 'Disabled'}`);
+    }
 
-      // Options: Export JSON
-      document.getElementById('menu-export-json').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute('href', dataStr);
-        downloadAnchor.setAttribute('download', 'badminton_101_backup.json');
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        showToast('Data exported successfully');
-      });
+    function exportDataJson() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', 'badminton_101_backup.json');
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Data exported successfully');
+    }
 
-      // Options: Import JSON
-      document.getElementById('menu-import-json').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        document.getElementById('import-file-input').click();
-      });
+    function triggerImportJson() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const fileInput = document.getElementById('import-file-input');
+      if (fileInput) fileInput.click();
+    }
 
-      document.getElementById('import-file-input').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const imported = JSON.parse(event.target.result);
-            if (imported && Array.isArray(imported.players) && Array.isArray(imported.matches)) {
-              state = imported;
-              saveState();
-              renderAll();
-              showToast('Data imported successfully!');
-            } else {
-              showToast('Invalid JSON file format', '⚠️');
-            }
-          } catch (err) {
-            showToast('Error parsing JSON file', '⚠️');
+    function resetSampleData() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      saveState();
+      currentPeriod = '2026-10';
+      renderAll();
+      showToast('Reset to screenshot data!');
+    }
+
+    function clearAllMatches() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      state.matches = [];
+      state.adjudgedWinners = {};
+      saveState();
+      renderAll();
+      showToast('All matches cleared', '🗑️');
+    }
+
+    function openFirebaseModal() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const modal = document.getElementById('modal-firebase');
+      if (modal) modal.classList.remove('hidden');
+      const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
+      const input = document.getElementById('firebase-config-input');
+      if (stored && input) {
+        input.value = stored;
+      }
+    }
+
+    function closeFirebaseModal() {
+      const modal = document.getElementById('modal-firebase');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveFirebaseConfig() {
+      const inputEl = document.getElementById('firebase-config-input');
+      const statusEl = document.getElementById('firebase-modal-status');
+      if (!inputEl || !statusEl) return;
+      const input = inputEl.value.trim();
+      statusEl.classList.remove('hidden');
+
+      if (!input) {
+        statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
+        statusEl.textContent = 'Please paste your Firebase config snippet or JSON.';
+        return;
+      }
+
+      try {
+        let config = null;
+        if (input.startsWith('{') && input.endsWith('}')) {
+          config = JSON.parse(input);
+        } else {
+          const apiKey = (input.match(/apiKey:\s*["']([^"']+)["']/) || [])[1];
+          const databaseURL = (input.match(/databaseURL:\s*["']([^"']+)["']/) || [])[1];
+          const projectId = (input.match(/projectId:\s*["']([^"']+)["']/) || [])[1];
+          const authDomain = (input.match(/authDomain:\s*["']([^"']+)["']/) || [])[1];
+          const appId = (input.match(/appId:\s*["']([^"']+)["']/) || [])[1];
+
+          if (apiKey) {
+            config = { apiKey, databaseURL, projectId, authDomain, appId };
           }
-        };
-        reader.readAsText(file);
+        }
+
+        if (!config || !config.apiKey) {
+          statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
+          statusEl.textContent = 'Could not find a valid apiKey in the pasted config.';
+          return;
+        }
+
+        localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(config, null, 2));
+        statusEl.className = 'text-xs p-2 rounded-lg bg-emerald-950/60 text-emerald-300';
+        statusEl.textContent = 'Connecting to Firebase...';
+
+        initFirebase();
+        showToast('Firebase configured & connected! ☁️');
+        setTimeout(() => {
+          closeFirebaseModal();
+        }, 1200);
+      } catch (e) {
+        statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
+        statusEl.textContent = 'Invalid format. Please paste the config object from Firebase.';
+      }
+    }
+
+    function disconnectFirebase() {
+      localStorage.removeItem(FIREBASE_CONFIG_KEY);
+      isCloudConnected = false;
+      if (cloudDbRef) {
+        cloudDbRef.off();
+        cloudDbRef = null;
+      }
+      const input = document.getElementById('firebase-config-input');
+      if (input) input.value = '';
+      updateCloudStatusBadge(false, 'Local Mode');
+      showToast('Disconnected from cloud. Using local storage.', 'ℹ️');
+      closeFirebaseModal();
+    }
+
+    function showToast(msg, icon = '✓') {
+      const toast = document.getElementById('toast');
+      const iconEl = document.getElementById('toast-icon');
+      const msgEl = document.getElementById('toast-msg');
+      if (!toast) return;
+      if (iconEl) iconEl.textContent = icon;
+      if (msgEl) msgEl.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2500);
+    }
+
+    // --- Core Initialization Function ---
+    function initApp() {
+      const dateInput = document.getElementById('date-played-input');
+      if (dateInput) {
+        dateInput.value = '2026-10-19';
+      }
+
+      // Render UI components
+      renderAll();
+
+      // Initialize Firebase (if configured)
+      initFirebase();
+
+      // Start ticker
+      setInterval(updateLiveTime, 10000);
+
+      // Dismiss menu on outside clicks
+      document.addEventListener('click', (e) => {
+        const btn = document.getElementById('btn-options');
+        const dropdown = document.getElementById('options-dropdown');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+          if (btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+          }
+        }
       });
 
-      // Options: Reset to Sample Data
-      document.getElementById('menu-reset-sample').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-        saveState();
-        currentPeriod = '2026-10';
-        renderAll();
-        showToast('Reset to screenshot data!');
-      });
-
-      // Options: Clear All Matches
-      document.getElementById('menu-clear-all').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        state.matches = [];
-        state.adjudgedWinners = {};
-        saveState();
-        renderAll();
-        showToast('All matches cleared', '🗑️');
-      });
-
-      // Swap Players Button
-      document.getElementById('btn-swap-players').addEventListener('click', () => {
-        const selA = document.getElementById('player-a-select');
-        const selB = document.getElementById('player-b-select');
-        const valA = selA.value;
-        const valB = selB.value;
-        selA.value = valB;
-        selB.value = valA;
-
-        const scoreA = document.getElementById('score-a-input');
-        const scoreB = document.getElementById('score-b-input');
-        const sValA = scoreA.value;
-        scoreA.value = scoreB.value;
-        scoreB.value = sValA;
-      });
-
-      // Quick Score Buttons
-      document.querySelectorAll('.btn-quick-score').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const sa = e.currentTarget.getAttribute('data-sa');
-          const sb = e.currentTarget.getAttribute('data-sb');
-          document.getElementById('score-a-input').value = sa;
-          document.getElementById('score-b-input').value = sb;
+      // JSON import listener
+      const fileInput = document.getElementById('import-file-input');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const imported = JSON.parse(event.target.result);
+              if (imported && Array.isArray(imported.players) && Array.isArray(imported.matches)) {
+                state = ensureStateDefaults(imported);
+                saveState();
+                renderAll();
+                showToast('Data imported successfully!');
+              } else {
+                showToast('Invalid JSON file format', '⚠️');
+              }
+            } catch (err) {
+              showToast('Error parsing JSON file', '⚠️');
+            }
+          };
+          reader.readAsText(file);
         });
-      });
+      }
+    }
 
-      // Head to Head player selectors change
-      document.getElementById('h2h-player-a').addEventListener('change', updateH2HView);
-      document.getElementById('h2h-player-b').addEventListener('change', updateH2HView);
+    // Expose all action functions on window
+    window.switchTab = switchTab;
+    window.handlePeriodChange = handlePeriodChange;
+    window.toggleOptionsMenu = toggleOptionsMenu;
+    window.swapPlayers = swapPlayers;
+    window.quickScore = quickScore;
+    window.handleMatchSubmit = handleMatchSubmit;
+    window.handleAddPlayerSubmit = handleAddPlayerSubmit;
+    window.openDeleteModal = openDeleteModal;
+    window.closeDeleteModal = closeDeleteModal;
+    window.confirmDeleteMatch = confirmDeleteMatch;
+    window.openRemovePlayerModal = openRemovePlayerModal;
+    window.closeRemovePlayerModal = closeRemovePlayerModal;
+    window.confirmRemovePlayer = confirmRemovePlayer;
+    window.triggerAdjudgeWinner = triggerAdjudgeWinner;
+    window.closeAdjudgeModal = closeAdjudgeModal;
+    window.handleAdjudgeMenuClick = handleAdjudgeMenuClick;
+    window.openHistoryModal = openHistoryModal;
+    window.closeHistoryModal = closeHistoryModal;
+    window.toggleSound = toggleSound;
+    window.exportDataJson = exportDataJson;
+    window.triggerImportJson = triggerImportJson;
+    window.resetSampleData = resetSampleData;
+    window.clearAllMatches = clearAllMatches;
+    window.openFirebaseModal = openFirebaseModal;
+    window.closeFirebaseModal = closeFirebaseModal;
+    window.saveFirebaseConfig = saveFirebaseConfig;
+    window.disconnectFirebase = disconnectFirebase;
+    window.updateH2HView = updateH2HView;
 
-      // Match Form Submit (Save match)
-      document.getElementById('match-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const errEl = document.getElementById('form-error');
-        errEl.classList.add('hidden');
-
-        const pA = document.getElementById('player-a-select').value;
-        const pB = document.getElementById('player-b-select').value;
-        const sA = parseInt(document.getElementById('score-a-input').value, 10);
-        const sB = parseInt(document.getElementById('score-b-input').value, 10);
-        const dateVal = document.getElementById('date-played-input').value;
-
-        if (!pA || !pB) {
-          errEl.textContent = 'Please select both players.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (pA === pB) {
-          errEl.textContent = 'Player A and Player B cannot be the same person.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (isNaN(sA) || isNaN(sB) || sA < 0 || sB < 0) {
-          errEl.textContent = 'Please enter valid non-negative scores.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (sA === sB) {
-          errEl.textContent = 'Badminton games cannot end in a tie. One player must win.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (!dateVal) {
-          errEl.textContent = 'Please select the date played.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        const newMatch = {
-          id: 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-          playerA: pA,
-          playerB: pB,
-          scoreA: sA,
-          scoreB: sB,
-          date: dateVal
-        };
-
-        state.matches.push(newMatch);
-        saveState();
-
-        const matchMonth = dateVal.substring(0, 7);
-        currentPeriod = matchMonth;
-
-        document.getElementById('score-a-input').value = '';
-        document.getElementById('score-b-input').value = '';
-
-        playSound('save');
-        renderAll();
-        showToast(`Match saved: ${pA} ${sA} - ${sB} ${pB}`);
-      });
-
-      // Add Player Form Submit
-      document.getElementById('add-player-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = document.getElementById('add-player-input');
-        const errEl = document.getElementById('player-error');
-        errEl.classList.add('hidden');
-
-        const name = input.value.trim();
-        if (!name) return;
-
-        if (state.players.some(p => p.toLowerCase() === name.toLowerCase())) {
-          errEl.textContent = `Player "${name}" already exists.`;
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        state.players.push(name);
-        saveState();
-        input.value = '';
-        renderAll();
-        showToast(`Player "${name}" added!`);
-      });
-
-      // Delete Match Modal handlers
-      document.getElementById('btn-cancel-delete').addEventListener('click', closeDeleteModal);
-      document.getElementById('btn-confirm-delete').addEventListener('click', () => {
-        if (!matchPendingDeleteId) return;
-        state.matches = state.matches.filter(m => m.id !== matchPendingDeleteId);
-        saveState();
-        playSound('delete');
-        closeDeleteModal();
-        renderAll();
-        showToast('Match deleted', '🗑️');
-      });
-
-      // Remove Player Modal handlers
-      document.getElementById('btn-cancel-remove-player').addEventListener('click', closeRemovePlayerModal);
-      document.getElementById('btn-confirm-remove-player').addEventListener('click', () => {
-        if (!playerPendingRemove) return;
-        state.players = state.players.filter(p => p !== playerPendingRemove);
-        saveState();
-        closeRemovePlayerModal();
-        renderAll();
-        showToast(`Player removed`, '🗑️');
-      });
-
-      // Close Adjudge Modal
-      document.getElementById('btn-close-adjudge').addEventListener('click', () => {
-        document.getElementById('modal-adjudge').classList.add('hidden');
-      });
-
-    });
+    // Run initialization immediately or on DOMContentLoaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
   </script>
 </body>
 </html>
