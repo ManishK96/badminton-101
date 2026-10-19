@@ -603,18 +603,17 @@
     const FIREBASE_CONFIG_KEY = 'badminton_101_firebase_config_v1';
 
     // OPTIONAL: Hardcode your firebaseConfig here before pushing to GitHub
-    const EMBEDDED_FIREBASE_CONFIG = // Import the functions you need from the SDKs you nee
-    {
-      apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
-      authDomain: "badminton-101-57f82.firebaseapp.com",
-      databaseURL: "https://badminton-101-57f82-default-rtdb.firebaseio.com/",
-      projectId: "badminton-101-57f82",
-      storageBucket: "badminton-101-57f82.firebasestorage.app",
-      messagingSenderId: "60091223084",
-      appId: "1:60091223084:web:b38f1d5ec5bb7b90f91589",
-      measurementId: "G-45P104NQQT"
-    };
-      
+    const EMBEDDED_FIREBASE_CONFIG = // Import the functions you need from the SDKs you need
+ {
+  apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
+  authDomain: "badminton-101-57f82.firebaseapp.com",
+  projectId: "badminton-101-57f82",
+  databaseURL: "https://badminton-101-57f82-default-rtdb.firebaseio.com/",
+  storageBucket: "badminton-101-57f82.firebasestorage.app",
+  messagingSenderId: "60091223084",
+  appId: "1:60091223084:web:b38f1d5ec5bb7b90f91589",
+  measurementId: "G-45P104NQQT"
+};
 
     // Default Seed Data matching the user's screenshots exactly:
     const DEFAULT_DATA = {
@@ -1481,7 +1480,7 @@
 
       playSound('save');
       renderAll();
-      showToast(`Match saved: ${pA} ${sA} - ${sB} ${pB}`);
+      showToast(`Match saved: ${pA} ${sA} - ${sB} ${pB}! Standings updated.`);
     }
 
     function handleAddPlayerSubmit(e) {
