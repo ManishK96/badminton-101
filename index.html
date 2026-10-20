@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Badminton 101 - Tracker & Standings</title>
+  <title>Badminton 101 - Singles & Doubles Tracker</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <!-- Google Fonts: Bebas Neue for athletic scoreboard display, Inter for UI -->
@@ -45,11 +45,18 @@
   </script>
 
   <style>
+    /* CRITICAL: Force .hidden elements to be completely removed from layout */
+    .hidden {
+      display: none !important;
+    }
     body {
       background-color: #0c1411;
       color: #e5ede9;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      -webkit-tap-highlight-color: transparent;
+    }
+    button, [role="button"], select, input[type="submit"] {
+      cursor: pointer;
+      touch-action: manipulation;
     }
     .font-bebas {
       font-family: 'Bebas Neue', sans-serif;
@@ -80,7 +87,7 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-[#0c1411] text-[#e3ebe7] flex flex-col items-center p-0 sm:p-4 select-none sm:select-auto">
+<body class="min-h-screen bg-[#0c1411] text-[#e3ebe7] flex flex-col items-center p-0 sm:p-4">
 
   <!-- Mobile/Responsive Frame Container -->
   <div class="w-full max-w-md min-h-screen sm:min-h-0 sm:my-4 bg-[#101915] sm:border sm:border-[#22352c] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative pb-10">
@@ -89,21 +96,21 @@
     <header class="px-5 pt-4 pb-2 bg-[#101915] border-b border-[#1b2b23] relative z-20">
       <div class="flex items-center justify-between mb-3">
         <!-- Close / Reset Home button -->
-        <button id="btn-home" aria-label="Home" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
+        <button id="btn-home" onclick="switchTab('standings')" aria-label="Home" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
 
         <!-- Cloud Sync Status Pill -->
-        <button id="btn-cloud-status" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all">
+        <button id="btn-cloud-status" onclick="openFirebaseModal()" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all">
           <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
           <span id="cloud-status-text">Local Mode</span>
         </button>
 
         <!-- Options menu (...) button -->
         <div class="relative">
-          <button id="btn-options" aria-label="Menu" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
+          <button id="btn-options" onclick="toggleOptionsMenu(event)" aria-label="Menu" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
             </svg>
@@ -111,38 +118,38 @@
           
           <!-- Dropdown Menu -->
           <div id="options-dropdown" class="hidden absolute right-0 mt-2 w-60 bg-[#16231d] border border-[#273d32] rounded-xl shadow-xl py-2 z-50 text-sm">
-            <button id="menu-firebase-setup" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#48a97c] font-semibold">
+            <button id="menu-firebase-setup" onclick="openFirebaseModal()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#48a97c] font-semibold">
               <span>☁️</span>
               <span>Firebase Real-time Sync</span>
             </button>
             <div class="h-px bg-[#24382e] my-1"></div>
-            <button id="menu-adjudge-winner" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#e5a93c]">
+            <button id="menu-adjudge-winner" onclick="handleAdjudgeMenuClick()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#e5a93c]">
               <span>👑</span>
-              <span>Adjudge Month Winner</span>
+              <span id="menu-adjudge-text">Adjudge Month Winner</span>
             </button>
-            <button id="menu-winner-history" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
+            <button id="menu-winner-history" onclick="openHistoryModal()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
               <span>🏆</span>
               <span>Past Champions</span>
             </button>
             <div class="h-px bg-[#24382e] my-1"></div>
-            <button id="menu-toggle-sound" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center justify-between text-[#d1ded7]">
+            <button id="menu-toggle-sound" onclick="toggleSound()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center justify-between text-[#d1ded7]">
               <span class="flex items-center gap-2"><span>🔊</span> Sound Effects</span>
               <span id="sound-status-badge" class="text-xs px-2 py-0.5 rounded bg-[#203429] text-[#48a97c]">ON</span>
             </button>
-            <button id="menu-export-json" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
+            <button id="menu-export-json" onclick="exportDataJson()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
               <span>📥</span>
               <span>Export Data (JSON)</span>
             </button>
-            <button id="menu-import-json" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
+            <button id="menu-import-json" onclick="triggerImportJson()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#d1ded7]">
               <span>📤</span>
               <span>Import Data (JSON)</span>
             </button>
             <div class="h-px bg-[#24382e] my-1"></div>
-            <button id="menu-reset-sample" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-[#9eb4aa] hover:text-[#48a97c]">
-              Reset to Screenshot Data
+            <button id="menu-reset-sample" onclick="resetSampleData()" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-[#9eb4aa] hover:text-[#48a97c]">
+              Reset to Sample Data
             </button>
-            <button id="menu-clear-all" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-rose-400">
-              Clear All Matches
+            <button id="menu-clear-all" onclick="clearCurrentModeMatches()" class="w-full text-left px-4 py-2 hover:bg-[#203229] text-rose-400">
+              Clear Current Matches
             </button>
           </div>
         </div>
@@ -152,10 +159,11 @@
       <div class="flex items-end justify-between gap-3 pt-1">
         <div>
           <h1 class="text-3xl tracking-wider font-bebas text-white uppercase leading-none">BADMINTON 101</h1>
+          <p class="text-[10px] text-[#6e857b] font-medium tracking-wide mt-0.5" id="header-mode-subtitle">SINGLES & DOUBLES TRACKER</p>
         </div>
         <div class="text-right">
           <label for="period-select" class="block text-[10px] tracking-wider uppercase text-[#738b81] font-semibold mb-0.5">PERIOD</label>
-          <select id="period-select" class="bg-[#182720] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-1.5 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
+          <select id="period-select" onchange="handlePeriodChange(event)" class="bg-[#182720] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-1.5 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
             <option value="2026-10">October 2026</option>
             <option value="2026-09">September 2026</option>
             <option value="2026-11">November 2026</option>
@@ -164,17 +172,31 @@
         </div>
       </div>
 
+      <!-- GAME MODE SELECTOR: SINGLES VS DOUBLES -->
+      <div class="pt-3 pb-1">
+        <div class="flex items-center p-1 bg-[#0c1411] border border-[#22352c] rounded-xl text-xs font-semibold">
+          <button id="mode-btn-singles" onclick="switchGameMode('singles')" class="flex-1 py-1.5 rounded-lg text-center transition-all bg-[#1b2b23] text-white shadow-sm flex items-center justify-center gap-1.5 border border-[#2e473b]">
+            <span>🏸</span>
+            <span class="tracking-wide">Singles (1v1)</span>
+          </button>
+          <button id="mode-btn-doubles" onclick="switchGameMode('doubles')" class="flex-1 py-1.5 rounded-lg text-center transition-all text-[#789085] hover:text-[#c4d4cc] flex items-center justify-center gap-1.5 border border-transparent">
+            <span>👥</span>
+            <span class="tracking-wide">Doubles (2v2)</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Navigation Tabs -->
-      <nav class="flex border-b border-[#21342a] mt-4 text-sm font-medium">
-        <button id="tab-standings" class="tab-button flex-1 pb-2.5 text-center transition-all relative font-semibold text-white">
+      <nav class="flex border-b border-[#21342a] mt-3 text-sm font-medium">
+        <button id="tab-standings" onclick="switchTab('standings')" class="tab-button flex-1 pb-2.5 text-center transition-all relative font-semibold text-white">
           Standings
           <span class="active-indicator absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
-        <button id="tab-h2h" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
+        <button id="tab-h2h" onclick="switchTab('h2h')" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
           Head to head
           <span class="active-indicator hidden absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
-        <button id="tab-log" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
+        <button id="tab-log" onclick="switchTab('log')" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
           Log a match
           <span class="active-indicator hidden absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
@@ -192,8 +214,8 @@
         <!-- Leading / Champion Card -->
         <div id="leading-card" class="bg-[#241a0e] border border-[#483315] rounded-xl p-4 shadow-lg relative overflow-hidden transition-all">
           <div class="flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-[#e5a93c] mb-1">
-            <span id="leading-badge-text">LEADING · OCTOBER 2026</span>
-            <button id="btn-adjudge-banner" class="text-[10px] bg-[#3a2914] hover:bg-[#4f3719] text-[#fcd34d] px-2 py-0.5 rounded border border-[#6b4c20] transition-colors">
+            <span id="leading-badge-text">LEADING · OCTOBER 2026 (SINGLES)</span>
+            <button id="btn-adjudge-banner" onclick="triggerAdjudgeWinner()" class="text-[10px] bg-[#3a2914] hover:bg-[#4f3719] text-[#fcd34d] px-2 py-0.5 rounded border border-[#6b4c20] transition-colors">
               Adjudge Winner
             </button>
           </div>
@@ -206,6 +228,13 @@
 
         <!-- Standings Table -->
         <div class="space-y-1">
+          <div class="flex items-center justify-between pb-1">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#738b81]" id="standings-table-title">
+              INDIVIDUAL STANDINGS
+            </h3>
+            <span class="text-[10px] text-[#5e776d] font-medium" id="standings-mode-pill">SINGLES</span>
+          </div>
+
           <!-- Table Header -->
           <div class="grid grid-cols-12 text-[10px] font-bold uppercase tracking-wider text-[#738b81] px-3 pb-1 border-b border-[#1b2b23]">
             <div class="col-span-1 text-center">#</div>
@@ -220,6 +249,17 @@
           <!-- Table Rows List -->
           <div id="standings-table-body" class="space-y-1.5 pt-1">
             <!-- Dynamically populated via renderStandings() -->
+          </div>
+        </div>
+
+        <!-- Doubles Top Partnerships Sub-Card (Visible only in Doubles mode) -->
+        <div id="doubles-pairs-section" class="hidden space-y-2 pt-1">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#738b81]">TOP PAIRINGS (PARTNERSHIPS)</h3>
+            <span class="text-[10px] text-[#5e776d]">DOUBLES DUOS</span>
+          </div>
+          <div id="doubles-pairs-container" class="space-y-1.5">
+            <!-- Dynamically populated in doubles mode -->
           </div>
         </div>
 
@@ -246,21 +286,60 @@
       <!-- ============================================== -->
       <section id="view-h2h" class="space-y-5 hidden">
 
-        <!-- Matchup Picker -->
-        <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-3">
-          <label class="block text-[10px] uppercase font-bold tracking-wider text-[#738b81] mb-2">Select Matchup</label>
+        <!-- Matchup Picker for Singles -->
+        <div id="h2h-picker-singles" class="bg-[#14221b] border border-[#22352c] rounded-xl p-3">
+          <label class="block text-[10px] uppercase font-bold tracking-wider text-[#738b81] mb-2">Select Singles Matchup</label>
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label for="h2h-player-a" class="block text-[9px] text-[#5e776d] mb-1">PLAYER 1</label>
-              <select id="h2h-player-a" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
+              <select id="h2h-player-a" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
                 <!-- Dynamically populated -->
               </select>
             </div>
             <div>
               <label for="h2h-player-b" class="block text-[9px] text-[#5e776d] mb-1">PLAYER 2</label>
-              <select id="h2h-player-b" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
+              <select id="h2h-player-b" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
                 <!-- Dynamically populated -->
               </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matchup Picker for Doubles -->
+        <div id="h2h-picker-doubles" class="hidden bg-[#14221b] border border-[#22352c] rounded-xl p-3 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="block text-[10px] uppercase font-bold tracking-wider text-[#738b81]">Select Doubles Comparison</label>
+            <div class="flex gap-1 text-[10px]">
+              <button type="button" id="h2h-doubles-mode-players" onclick="setDoublesH2HMode('players')" class="px-2 py-0.5 rounded bg-[#1f3227] text-[#48a97c] font-semibold border border-[#2d4b3b]">Player vs Player</button>
+              <button type="button" id="h2h-doubles-mode-teams" onclick="setDoublesH2HMode('teams')" class="px-2 py-0.5 rounded bg-[#101915] text-[#738b81] font-medium border border-[#25392f]">Pair vs Pair</button>
+            </div>
+          </div>
+
+          <!-- Doubles: Player vs Player across all doubles -->
+          <div id="doubles-h2h-players-container" class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="h2h-d-player-a" class="block text-[9px] text-[#5e776d] mb-1">PLAYER 1</label>
+              <select id="h2h-d-player-a" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer"></select>
+            </div>
+            <div>
+              <label for="h2h-d-player-b" class="block text-[9px] text-[#5e776d] mb-1">PLAYER 2</label>
+              <select id="h2h-d-player-b" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer"></select>
+            </div>
+          </div>
+
+          <!-- Doubles: Pair vs Pair -->
+          <div id="doubles-h2h-teams-container" class="hidden space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <div class="space-y-1">
+                <span class="block text-[9px] font-bold text-[#48a97c]">PAIR 1</span>
+                <select id="h2h-team-a1" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2 py-1.5 cursor-pointer"></select>
+                <select id="h2h-team-a2" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2 py-1.5 cursor-pointer"></select>
+              </div>
+              <div class="space-y-1">
+                <span class="block text-[9px] font-bold text-[#e5a93c]">PAIR 2</span>
+                <select id="h2h-team-b1" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2 py-1.5 cursor-pointer"></select>
+                <select id="h2h-team-b2" onchange="updateH2HView()" class="w-full bg-[#101915] border border-[#25392f] text-white text-xs rounded-lg px-2 py-1.5 cursor-pointer"></select>
+              </div>
             </div>
           </div>
         </div>
@@ -268,7 +347,7 @@
         <!-- H2H Comparison Card -->
         <div id="h2h-card" class="bg-[#14221b] border border-[#22352c] rounded-xl p-4 shadow-lg space-y-4">
           <div class="flex items-start justify-between">
-            <!-- Left Player -->
+            <!-- Left Player / Team -->
             <div class="w-5/12 text-left">
               <h3 id="h2h-name-a" class="text-base font-bold text-white truncate">Manish</h3>
               <div id="h2h-wins-a" class="text-4xl font-bebas text-[#e5a93c] leading-none mt-1">3</div>
@@ -280,7 +359,7 @@
               <span id="h2h-matches-count" class="text-[10px] font-bold uppercase tracking-wider text-[#738b81]">4 MATCHES</span>
             </div>
 
-            <!-- Right Player -->
+            <!-- Right Player / Team -->
             <div class="w-5/12 text-right">
               <h3 id="h2h-name-b" class="text-base font-bold text-white truncate">Pranav</h3>
               <div id="h2h-wins-b" class="text-4xl font-bebas text-[#8fa39a] leading-none mt-1">1</div>
@@ -301,6 +380,18 @@
           </div>
         </div>
 
+        <!-- Doubles Partner Chemistry Card (Visible in Doubles Player vs Player) -->
+        <div id="doubles-chemistry-card" class="hidden bg-[#182721] border border-[#2b4236] rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between text-xs font-bold text-[#48a97c]">
+            <span class="flex items-center gap-1.5"><span>🤝</span> Partner Chemistry (When On Same Team)</span>
+            <span id="h2h-chemistry-rate" class="px-2 py-0.5 rounded bg-[#101b16] text-[#69cfa1] border border-[#243c2f]">100% Win</span>
+          </div>
+          <div class="text-xs text-[#c4d4cc] flex items-center justify-between pt-0.5">
+            <span id="h2h-chemistry-record">Played 2 matches together: 2 Wins, 0 Losses</span>
+            <span id="h2h-chemistry-pts" class="text-[#8fa39a] text-[11px]">42 total pts</span>
+          </div>
+        </div>
+
         <!-- H2H Detailed Metrics -->
         <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-3 space-y-2 text-xs">
           <div class="flex justify-between items-center py-1 border-b border-[#1b2b23]">
@@ -317,9 +408,9 @@
           </div>
         </div>
 
-        <!-- Match History Between These Two -->
+        <!-- Match History Between Them -->
         <div class="space-y-2">
-          <h4 class="text-[11px] font-bold uppercase tracking-wider text-[#738b81]">Matches Between Them</h4>
+          <h4 class="text-[11px] font-bold uppercase tracking-wider text-[#738b81]" id="h2h-history-heading">Matches Between Them</h4>
           <div id="h2h-matches-list" class="space-y-2">
             <!-- Dynamically populated -->
           </div>
@@ -332,8 +423,14 @@
       <!-- ============================================== -->
       <section id="view-log" class="space-y-6 hidden">
 
-        <!-- Log Match Form -->
-        <form id="match-form" class="space-y-4">
+        <!-- LOG MATCH: SINGLES FORM -->
+        <form id="singles-match-form" onsubmit="handleSinglesMatchSubmit(event)" class="space-y-4">
+          <div class="flex items-center justify-between border-b border-[#1b2b23] pb-1.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#48a97c] flex items-center gap-1.5">
+              <span>🏸</span> Log Singles Match
+            </h3>
+            <span class="text-[10px] text-[#6e857b]">1 vs 1</span>
+          </div>
 
           <!-- Players Selection Row -->
           <div class="grid grid-cols-2 gap-3">
@@ -353,7 +450,7 @@
 
           <!-- Swap Players Button -->
           <div class="flex justify-center -my-2">
-            <button type="button" id="btn-swap-players" class="px-3 py-1 text-[11px] bg-[#1a2b23] hover:bg-[#253b30] text-[#789085] hover:text-[#48a97c] border border-[#273d31] rounded-full flex items-center gap-1.5 transition-colors">
+            <button type="button" id="btn-swap-players" onclick="swapSinglesPlayers()" class="px-3 py-1 text-[11px] bg-[#1a2b23] hover:bg-[#253b30] text-[#789085] hover:text-[#48a97c] border border-[#273d31] rounded-full flex items-center gap-1.5 transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
               </svg>
@@ -378,11 +475,11 @@
           <!-- Quick Score Presets for Badminton -->
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <span class="text-[10px] text-[#5e776d] whitespace-nowrap font-medium">Quick:</span>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="21" data-sb="19">21-19</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="21" data-sb="15">21-15</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="22" data-sb="20">22-20</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="19" data-sb="21">19-21</button>
-            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" data-sa="14" data-sb="21">14-21</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreSingles(21, 19)">21-19</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreSingles(21, 15)">21-15</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreSingles(22, 20)">22-20</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreSingles(19, 21)">19-21</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreSingles(14, 21)">14-21</button>
           </div>
 
           <!-- Date Played -->
@@ -390,15 +487,98 @@
             <label for="date-played-input" class="block text-[10px] font-bold tracking-wider uppercase text-[#738b81] mb-1">DATE PLAYED</label>
             <input type="date" id="date-played-input" required
               class="w-full bg-[#14221b] border border-[#25392f] text-white text-sm rounded-lg px-3 py-2.5 font-medium focus:outline-none focus:border-[#48a97c]">
-            <p class="text-[11px] text-[#657d72] mt-1.5">The match counts toward the month of this date. It defaults to today.</p>
           </div>
 
-          <!-- Error Feedback Container -->
-          <div id="form-error" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-lg"></div>
+          <div id="form-error-singles" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-lg"></div>
 
-          <!-- Save Match Button -->
-          <button type="submit" id="btn-save-match" class="w-full py-3.5 px-4 bg-[#48a97c] hover:bg-[#54bc8b] active:scale-[0.99] text-[#0c1a14] font-bold text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-            <span>Save match</span>
+          <button type="submit" id="btn-save-singles-match" class="w-full py-3.5 px-4 bg-[#48a97c] hover:bg-[#54bc8b] active:scale-[0.99] text-[#0c1a14] font-bold text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+            <span>Save Singles Match</span>
+          </button>
+        </form>
+
+        <!-- LOG MATCH: DOUBLES FORM -->
+        <form id="doubles-match-form" onsubmit="handleDoublesMatchSubmit(event)" class="hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-[#1b2b23] pb-1.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#e5a93c] flex items-center gap-1.5">
+              <span>👥</span> Log Doubles Match
+            </h3>
+            <span class="text-[10px] text-[#6e857b]">2 vs 2</span>
+          </div>
+
+          <!-- Doubles Teams Selection Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Team A -->
+            <div class="bg-[#14221b] border border-[#23372c] p-2.5 rounded-xl space-y-2">
+              <span class="block text-[10px] font-bold uppercase tracking-wider text-[#48a97c]">TEAM A (PAIR)</span>
+              <div>
+                <label for="doubles-a1-select" class="block text-[9px] text-[#6e857b] mb-0.5">Player 1</label>
+                <select id="doubles-a1-select" class="w-full bg-[#0c1411] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer"></select>
+              </div>
+              <div>
+                <label for="doubles-a2-select" class="block text-[9px] text-[#6e857b] mb-0.5">Player 2</label>
+                <select id="doubles-a2-select" class="w-full bg-[#0c1411] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer"></select>
+              </div>
+            </div>
+
+            <!-- Team B -->
+            <div class="bg-[#14221b] border border-[#23372c] p-2.5 rounded-xl space-y-2">
+              <span class="block text-[10px] font-bold uppercase tracking-wider text-[#e5a93c]">TEAM B (PAIR)</span>
+              <div>
+                <label for="doubles-b1-select" class="block text-[9px] text-[#6e857b] mb-0.5">Player 1</label>
+                <select id="doubles-b1-select" class="w-full bg-[#0c1411] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer"></select>
+              </div>
+              <div>
+                <label for="doubles-b2-select" class="block text-[9px] text-[#6e857b] mb-0.5">Player 2</label>
+                <select id="doubles-b2-select" class="w-full bg-[#0c1411] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-2 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer"></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Swap Buttons Row -->
+          <div class="flex items-center justify-center gap-2 -my-2">
+            <button type="button" onclick="swapDoublesTeams()" class="px-2.5 py-1 text-[11px] bg-[#1a2b23] hover:bg-[#253b30] text-[#789085] hover:text-[#48a97c] border border-[#273d31] rounded-full flex items-center gap-1 transition-colors">
+              ⇄ Swap Teams
+            </button>
+            <button type="button" onclick="shuffleDoublesPartners()" class="px-2.5 py-1 text-[11px] bg-[#1a2b23] hover:bg-[#253b30] text-[#789085] hover:text-[#e5a93c] border border-[#273d31] rounded-full flex items-center gap-1 transition-colors">
+              🔀 Mix Partners
+            </button>
+          </div>
+
+          <!-- Doubles Scores -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="doubles-score-a" class="block text-[10px] font-bold tracking-wider uppercase text-[#738b81] mb-1">TEAM A SCORE</label>
+              <input type="number" id="doubles-score-a" min="0" max="99" placeholder="0" required
+                class="w-full bg-[#14221b] border border-[#25392f] text-white text-lg font-bebas tracking-wider rounded-lg px-3 py-2 focus:outline-none focus:border-[#48a97c]">
+            </div>
+            <div>
+              <label for="doubles-score-b" class="block text-[10px] font-bold tracking-wider uppercase text-[#738b81] mb-1">TEAM B SCORE</label>
+              <input type="number" id="doubles-score-b" min="0" max="99" placeholder="0" required
+                class="w-full bg-[#14221b] border border-[#25392f] text-white text-lg font-bebas tracking-wider rounded-lg px-3 py-2 focus:outline-none focus:border-[#48a97c]">
+            </div>
+          </div>
+
+          <!-- Quick Score Presets -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <span class="text-[10px] text-[#5e776d] whitespace-nowrap font-medium">Quick:</span>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreDoubles(21, 19)">21-19</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreDoubles(21, 17)">21-17</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreDoubles(22, 20)">22-20</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreDoubles(18, 21)">18-21</button>
+            <button type="button" class="btn-quick-score px-2 py-0.5 rounded bg-[#182720] hover:bg-[#23382e] border border-[#273c31] text-[#9eb4aa]" onclick="quickScoreDoubles(15, 21)">15-21</button>
+          </div>
+
+          <!-- Date Played -->
+          <div>
+            <label for="doubles-date-input" class="block text-[10px] font-bold tracking-wider uppercase text-[#738b81] mb-1">DATE PLAYED</label>
+            <input type="date" id="doubles-date-input" required
+              class="w-full bg-[#14221b] border border-[#25392f] text-white text-sm rounded-lg px-3 py-2.5 font-medium focus:outline-none focus:border-[#48a97c]">
+          </div>
+
+          <div id="form-error-doubles" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-lg"></div>
+
+          <button type="submit" id="btn-save-doubles-match" class="w-full py-3.5 px-4 bg-[#e5a93c] hover:bg-[#f59e0b] active:scale-[0.99] text-[#140e05] font-bold text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+            <span>Save Doubles Match</span>
           </button>
         </form>
 
@@ -419,7 +599,10 @@
 
         <!-- Players Management Section -->
         <div class="space-y-3 pt-3 border-t border-[#1b2b23]">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-[#738b81]">PLAYERS</h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#738b81]">ROSTER & PLAYERS</h3>
+            <span class="text-[10px] text-[#5e776d]">Shared across Singles & Doubles</span>
+          </div>
           
           <!-- Player Chips List -->
           <div id="players-chips-container" class="flex flex-wrap gap-2">
@@ -427,7 +610,7 @@
           </div>
 
           <!-- Add Player Form -->
-          <form id="add-player-form" class="flex gap-2 pt-1">
+          <form id="add-player-form" onsubmit="handleAddPlayerSubmit(event)" class="flex gap-2 pt-1">
             <input type="text" id="add-player-input" placeholder="Add a player" maxlength="20"
               class="flex-1 bg-[#14221b] border border-[#25392f] text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#48a97c]">
             <button type="submit" id="btn-add-player" class="px-5 py-2.5 bg-[#48a97c] hover:bg-[#54bc8b] text-[#0c1a14] font-bold text-sm rounded-xl transition-colors">
@@ -442,10 +625,10 @@
       <!-- Explanatory Footer Text -->
       <footer class="pt-4 border-t border-[#1b2b23] text-xs text-[#6e857b] space-y-3">
         <p class="leading-relaxed">
-          Most wins takes the month. If wins are level, the player with more total points won takes it. Win % is wins divided by matches played.
+          Most wins takes the month. If wins are level, the player with more total points won takes it. Singles and Doubles are tracked with independent standings.
         </p>
         <p id="live-status-time" class="text-[#556961] text-[11px]">
-          You can log matches. Live, last checked 07:40:49 PM.
+          Live sync ready.
         </p>
       </footer>
 
@@ -462,19 +645,19 @@
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <span>☁️</span> Firebase Realtime Sync
           </h3>
-          <button id="btn-close-firebase" class="text-[#738b81] hover:text-white">✕</button>
+          <button id="btn-close-firebase" onclick="closeFirebaseModal()" class="text-[#738b81] hover:text-white">✕</button>
         </div>
 
         <div class="text-xs text-[#9eb4aa] space-y-2 leading-relaxed">
           <p>
-            Connect a 100% free Google Firebase Realtime Database so all three of you can log matches on your own phones with live real-time syncing!
+            Connect a 100% free Google Firebase Realtime Database so all of you can log singles and doubles matches on your phones with live real-time syncing!
           </p>
           <div class="bg-[#0e1713] p-2.5 rounded-xl border border-[#24392e] text-[11px] space-y-1">
-            <div class="font-bold text-[#48a97c]">How to get your free config (1 min):</div>
+            <div class="font-bold text-[#48a97c]">Quick Setup (1 min):</div>
             <ol class="list-decimal list-inside space-y-0.5 text-[#8fa39a]">
-              <li>Go to <a href="https://console.firebase.google.com" target="_blank" class="text-[#48a97c] underline">console.firebase.google.com</a> and click <strong>Add project</strong>.</li>
-              <li>Click <strong>Build → Realtime Database → Create Database</strong> (choose test mode).</li>
-              <li>Go to <strong>Project Settings (⚙️) → Your Apps → Web (&lt;/&gt;)</strong> and copy the <code class="text-amber-300">firebaseConfig</code> object.</li>
+              <li>Go to <a href="https://console.firebase.google.com" target="_blank" class="text-[#48a97c] underline">console.firebase.google.com</a> → <strong>Add project</strong>.</li>
+              <li>Click <strong>Build → Realtime Database → Create Database</strong>.</li>
+              <li>Go to <strong>Project Settings (⚙️) → Your Apps → Web (&lt;/&gt;)</strong> and copy <code class="text-amber-300">firebaseConfig</code>.</li>
             </ol>
           </div>
         </div>
@@ -494,10 +677,10 @@
           <div id="firebase-modal-status" class="hidden text-xs p-2 rounded-lg"></div>
 
           <div class="flex gap-2">
-            <button id="btn-save-firebase" class="flex-1 py-2.5 bg-[#48a97c] hover:bg-[#54bc8b] text-[#0c1a14] font-bold text-xs rounded-xl transition-all shadow-md">
+            <button id="btn-save-firebase" onclick="saveFirebaseConfig()" class="flex-1 py-2.5 bg-[#48a97c] hover:bg-[#54bc8b] text-[#0c1a14] font-bold text-xs rounded-xl transition-all shadow-md">
               Connect & Sync
             </button>
-            <button id="btn-disconnect-firebase" class="py-2.5 px-3 bg-[#1e2f26] hover:bg-rose-950/60 hover:text-rose-400 text-xs font-semibold text-[#8fa39a] rounded-xl transition-colors">
+            <button id="btn-disconnect-firebase" onclick="disconnectFirebase()" class="py-2.5 px-3 bg-[#1e2f26] hover:bg-rose-950/60 hover:text-rose-400 text-xs font-semibold text-[#8fa39a] rounded-xl transition-colors">
               Disconnect
             </button>
           </div>
@@ -513,10 +696,10 @@
           Are you sure you want to delete this match? This will recalculate all standings and head-to-head records.
         </p>
         <div class="flex gap-2 pt-1">
-          <button id="btn-cancel-delete" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
+          <button id="btn-cancel-delete" onclick="closeDeleteModal()" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
             Cancel
           </button>
-          <button id="btn-confirm-delete" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
+          <button id="btn-confirm-delete" onclick="confirmDeleteMatch()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
             Delete
           </button>
         </div>
@@ -531,10 +714,10 @@
           Are you sure you want to remove this player?
         </p>
         <div class="flex gap-2 pt-1">
-          <button id="btn-cancel-remove-player" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
+          <button id="btn-cancel-remove-player" onclick="closeRemovePlayerModal()" class="flex-1 py-2 rounded-xl bg-[#1d2f26] hover:bg-[#273d32] text-xs font-semibold text-[#c4d4cc]">
             Cancel
           </button>
-          <button id="btn-confirm-remove-player" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
+          <button id="btn-confirm-remove-player" onclick="confirmRemovePlayer()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white">
             Remove
           </button>
         </div>
@@ -557,7 +740,7 @@
         <p id="modal-adjudge-reason" class="text-xs text-[#b8955a] italic leading-relaxed">
           Winner adjudged by most wins!
         </p>
-        <button id="btn-close-adjudge" class="w-full py-2.5 bg-[#e5a93c] hover:bg-[#f59e0b] text-[#140e05] font-bold text-xs uppercase tracking-wider rounded-xl transition-colors">
+        <button id="btn-close-adjudge" onclick="closeAdjudgeModal()" class="w-full py-2.5 bg-[#e5a93c] hover:bg-[#f59e0b] text-[#140e05] font-bold text-xs uppercase tracking-wider rounded-xl transition-colors">
           Awesome!
         </button>
       </div>
@@ -570,7 +753,7 @@
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <span>🏆</span> Monthly Champions
           </h3>
-          <button id="btn-close-history" class="text-[#738b81] hover:text-white">✕</button>
+          <button id="btn-close-history" onclick="closeHistoryModal()" class="text-[#738b81] hover:text-white">✕</button>
         </div>
         <div id="champions-list-container" class="space-y-2 max-h-60 overflow-y-auto">
           <!-- Dynamically populated -->
@@ -592,39 +775,52 @@
   <!-- Application Logic -->
   <script>
     // --- Application State ---
-    const STORAGE_KEY = 'badminton_101_app_state_v1';
+    const STORAGE_KEY = 'badminton_101_app_state_v2';
     const FIREBASE_CONFIG_KEY = 'badminton_101_firebase_config_v1';
 
-    // OPTIONAL: You can also hardcode your firebaseConfig here before pushing to GitHub:
-    const EMBEDDED_FIREBASE_CONFIG = // Import the functions you need from the SDKs you need
- {
-  apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
-  authDomain: "badminton-101-57f82.firebaseapp.com",
-  databaseURL: "https://badminton-101-57f82-default-rtdb.firebaseio.com/",
-  projectId: "badminton-101-57f82",
-  storageBucket: "badminton-101-57f82.firebasestorage.app",
-  messagingSenderId: "60091223084",
-  appId: "1:60091223084:web:b38f1d5ec5bb7b90f91589",
-  measurementId: "G-45P104NQQT"
-};
+    // =========================================================================
+    // ☁️ FIREBASE CLOUD CONFIGURATION (FOR GITHUB PAGES AUTO-SYNC)
+    // Paste your Firebase config object here before pushing to GitHub Pages so
+    // that anyone who opens your link connects to live sync automatically!
+    // =========================================================================
+    const EMBEDDED_FIREBASE_CONFIG = 
+        {
+      apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
+      authDomain: "badminton-101-57f82.firebaseapp.com",
+      databaseURL: "https://badminton-101-57f82-default-rtdb.firebaseio.com/",
+      projectId: "badminton-101-57f82",
+      storageBucket: "badminton-101-57f82.firebasestorage.app",
+      messagingSenderId: "60091223084",
+      appId: "1:60091223084:web:b38f1d5ec5bb7b90f91589",
+      measurementId: "G-45P104NQQT"
+    };
 
-    // Default Seed Data matching the user's screenshots exactly:
     const DEFAULT_DATA = {
-      players: ['Manish', 'Nitesh', 'Pranav'],
-      matches: [
-        { id: 'm1', playerA: 'Manish', playerB: 'Pranav', scoreA: 22, scoreB: 20, date: '2026-10-19' },
-        { id: 'm2', playerA: 'Manish', playerB: 'Pranav', scoreA: 14, scoreB: 21, date: '2026-10-19' },
-        { id: 'm3', playerA: 'Manish', playerB: 'Pranav', scoreA: 21, scoreB: 13, date: '2026-10-19' },
-        { id: 'm4', playerA: 'Manish', playerB: 'Pranav', scoreA: 21, scoreB: 19, date: '2026-10-19' }
+      players: ['Manish', 'Nitesh', 'Pranav', 'Karthik'],
+      matches: [ // Singles matches (exact match to screenshot)
+        { id: 's1', playerA: 'Manish', playerB: 'Pranav', scoreA: 22, scoreB: 20, date: '2026-10-19' },
+        { id: 's2', playerA: 'Manish', playerB: 'Pranav', scoreA: 14, scoreB: 21, date: '2026-10-19' },
+        { id: 's3', playerA: 'Manish', playerB: 'Pranav', scoreA: 21, scoreB: 13, date: '2026-10-19' },
+        { id: 's4', playerA: 'Manish', playerB: 'Pranav', scoreA: 21, scoreB: 19, date: '2026-10-19' }
+      ],
+      doublesMatches: [ // Doubles matches
+        { id: 'd1', teamA: ['Manish', 'Pranav'], teamB: ['Nitesh', 'Karthik'], scoreA: 21, scoreB: 17, date: '2026-10-19' },
+        { id: 'd2', teamA: ['Manish', 'Nitesh'], teamB: ['Pranav', 'Karthik'], scoreA: 18, scoreB: 21, date: '2026-10-19' },
+        { id: 'd3', teamA: ['Manish', 'Karthik'], teamB: ['Nitesh', 'Pranav'], scoreA: 21, scoreB: 19, date: '2026-10-19' }
       ],
       soundEnabled: true,
-      adjudgedWinners: {}
+      adjudgedWinners: {
+        singles: {},
+        doubles: {}
+      }
     };
 
     let state = loadState();
     let currentPeriod = '2026-10'; // October 2026
-    let activeTab = 'standings';
-    let matchPendingDeleteId = null;
+    let activeTab = 'standings'; // 'standings' | 'h2h' | 'log'
+    let currentGameMode = 'singles'; // 'singles' | 'doubles'
+    let doublesH2HMode = 'players'; // 'players' | 'teams'
+    let matchPendingDelete = null; // { id, type: 'singles'|'doubles' }
     let playerPendingRemove = null;
 
     // --- Firebase Real-Time Synchronization Layer ---
@@ -636,15 +832,43 @@
 
     function initFirebase() {
       let config = null;
-      if (EMBEDDED_FIREBASE_CONFIG && EMBEDDED_FIREBASE_CONFIG.apiKey) {
+
+      // 1. Check if hardcoded in EMBEDDED_FIREBASE_CONFIG (for GitHub Pages auto-sync)
+      if (typeof EMBEDDED_FIREBASE_CONFIG !== 'undefined' && EMBEDDED_FIREBASE_CONFIG && EMBEDDED_FIREBASE_CONFIG.apiKey && EMBEDDED_FIREBASE_CONFIG.apiKey.trim() !== '') {
         config = EMBEDDED_FIREBASE_CONFIG;
-      } else {
+      }
+      // 2. Check window.firebaseConfig
+      else if (typeof window !== 'undefined' && window.firebaseConfig && window.firebaseConfig.apiKey) {
+        config = window.firebaseConfig;
+      }
+      // 3. Fallback to localStorage
+      else {
         try {
           const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
-          if (stored) config = JSON.parse(stored);
+          if (stored) {
+            try {
+              config = JSON.parse(stored);
+            } catch (err) {
+              const extract = (k) => { const m = stored.match(new RegExp(k + ':\\s*[\"\\\']([^\"\\\']+)[\"\\\']', 'i')); return m ? m[1] : undefined; };
+              const apiKey = extract('apiKey');
+              if (apiKey) {
+                config = {
+                  apiKey,
+                  projectId: extract('projectId'),
+                  databaseURL: extract('databaseURL'),
+                  authDomain: extract('authDomain'),
+                  appId: extract('appId')
+                };
+              }
+            }
+          }
         } catch (e) {
           console.warn('Could not read firebase config', e);
         }
+      }
+
+      if (config && config.projectId && !config.databaseURL) {
+        config.databaseURL = `https://${config.projectId}-default-rtdb.firebaseio.com`;
       }
 
       if (!config || !config.apiKey) {
@@ -658,7 +882,7 @@
           return;
         }
 
-        if (!firebase.apps.length) {
+        if (!firebase.apps || !firebase.apps.length) {
           firebaseApp = firebase.initializeApp(config);
         } else {
           firebaseApp = firebase.app();
@@ -667,18 +891,16 @@
         firebaseDb = firebase.database();
         cloudDbRef = firebaseDb.ref('badminton_shared_data');
 
-        // Real-time listener for incoming changes from friends!
         cloudDbRef.on('value', (snapshot) => {
           const val = snapshot.val();
-          if (val && Array.isArray(val.players) && Array.isArray(val.matches)) {
+          if (val && Array.isArray(val.players)) {
             isRemoteUpdate = true;
-            state = val;
+            state = ensureStateDefaults(val);
             saveStateLocalOnly();
             renderAll();
             isRemoteUpdate = false;
             updateCloudStatusBadge(true, 'Live Synced');
           } else if (!val) {
-            // First time connection: initialize cloud database with initial state
             cloudDbRef.set(state);
             updateCloudStatusBadge(true, 'Live Synced');
           }
@@ -709,7 +931,6 @@
       const dot = document.getElementById('cloud-status-dot');
       const label = document.getElementById('cloud-status-text');
       const btn = document.getElementById('btn-cloud-status');
-
       if (!dot || !label || !btn) return;
 
       label.textContent = text;
@@ -766,7 +987,7 @@
           osc.start(now);
           osc.stop(now + 0.2);
         } else if (type === 'win') {
-          const notes = [523.25, 659.25, 783.99, 1046.50]; // C E G C
+          const notes = [523.25, 659.25, 783.99, 1046.50];
           notes.forEach((freq, idx) => {
             const o = ctx.createOscillator();
             const g = ctx.createGain();
@@ -779,21 +1000,44 @@
             o.stop(now + idx * 0.08 + 0.3);
           });
         }
-      } catch (e) {
-        // Audio error ignored safely
-      }
+      } catch (e) {}
     }
 
-    // --- State Persistence ---
+    // --- State Persistence & Migration ---
+    function ensureStateDefaults(s) {
+      if (!s || typeof s !== 'object') {
+        s = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
+      if (!Array.isArray(s.players)) s.players = ['Manish', 'Nitesh', 'Pranav', 'Karthik'];
+      if (!Array.isArray(s.matches)) s.matches = [];
+      if (!Array.isArray(s.doublesMatches)) s.doublesMatches = [];
+
+      // Migrate older adjudgedWinners if flat object
+      if (!s.adjudgedWinners || typeof s.adjudgedWinners !== 'object') {
+        s.adjudgedWinners = { singles: {}, doubles: {} };
+      } else if (!s.adjudgedWinners.singles && !s.adjudgedWinners.doubles) {
+        s.adjudgedWinners = {
+          singles: s.adjudgedWinners,
+          doubles: {}
+        };
+      }
+      if (typeof s.soundEnabled !== 'boolean') s.soundEnabled = true;
+      return s;
+    }
+
     function loadState() {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        // Try v2 storage first
+        let stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) {
+          // Fallback to v1 storage and migrate
+          stored = localStorage.getItem('badminton_101_app_state_v1');
+        }
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed && Array.isArray(parsed.players) && Array.isArray(parsed.matches)) {
-              if (!parsed.adjudgedWinners) parsed.adjudgedWinners = {};
-              return parsed;
-            }
+          if (parsed && Array.isArray(parsed.players)) {
+            return ensureStateDefaults(parsed);
+          }
         }
       } catch (e) {
         console.warn('LocalStorage load failed', e);
@@ -835,58 +1079,73 @@
       return `${mName} ${parts[0]}`;
     }
 
-    function getPeriodMatches(periodKey) {
-      if (periodKey === 'ALL') return state.matches;
-      return state.matches.filter(m => m.date.startsWith(periodKey));
+    function getCurrentMatchesList() {
+      const all = currentGameMode === 'singles' ? state.matches : state.doublesMatches;
+      if (currentPeriod === 'ALL') return all;
+      return all.filter(m => m.date && m.date.startsWith(currentPeriod));
     }
 
-    // --- Computation Logic: Standings & Tie-breakers ---
-    function calculateStandings(periodKey) {
-      const matches = getPeriodMatches(periodKey);
+    // --- Standings Computation ---
+    function calculateStandings(periodKey, mode = currentGameMode) {
       const stats = {};
-
       state.players.forEach(p => {
-        stats[p] = {
-          name: p,
-          played: 0,
-          wins: 0,
-          lost: 0,
-          winPct: 0,
-          ptsWon: 0,
-          ptsConceded: 0
-        };
+        stats[p] = { name: p, played: 0, wins: 0, lost: 0, winPct: 0, ptsWon: 0, ptsConceded: 0 };
       });
 
-      matches.forEach(m => {
-        if (!stats[m.playerA]) {
-          stats[m.playerA] = { name: m.playerA, played: 0, wins: 0, lost: 0, winPct: 0, ptsWon: 0, ptsConceded: 0 };
-        }
-        if (!stats[m.playerB]) {
-          stats[m.playerB] = { name: m.playerB, played: 0, wins: 0, lost: 0, winPct: 0, ptsWon: 0, ptsConceded: 0 };
-        }
+      if (mode === 'singles') {
+        const matches = (periodKey === 'ALL') ? state.matches : state.matches.filter(m => m.date.startsWith(periodKey));
+        matches.forEach(m => {
+          if (!stats[m.playerA]) stats[m.playerA] = { name: m.playerA, played: 0, wins: 0, lost: 0, winPct: 0, ptsWon: 0, ptsConceded: 0 };
+          if (!stats[m.playerB]) stats[m.playerB] = { name: m.playerB, played: 0, wins: 0, lost: 0, winPct: 0, ptsWon: 0, ptsConceded: 0 };
 
-        stats[m.playerA].played++;
-        stats[m.playerB].played++;
-        stats[m.playerA].ptsWon += Number(m.scoreA);
-        stats[m.playerB].ptsWon += Number(m.scoreB);
-        stats[m.playerA].ptsConceded += Number(m.scoreB);
-        stats[m.playerB].ptsConceded += Number(m.scoreA);
+          stats[m.playerA].played++;
+          stats[m.playerB].played++;
+          stats[m.playerA].ptsWon += Number(m.scoreA);
+          stats[m.playerB].ptsWon += Number(m.scoreB);
+          stats[m.playerA].ptsConceded += Number(m.scoreB);
+          stats[m.playerB].ptsConceded += Number(m.scoreA);
 
-        if (Number(m.scoreA) > Number(m.scoreB)) {
-          stats[m.playerA].wins++;
-          stats[m.playerB].lost++;
-        } else if (Number(m.scoreB) > Number(m.scoreA)) {
-          stats[m.playerB].wins++;
-          stats[m.playerA].lost++;
-        }
-      });
+          if (Number(m.scoreA) > Number(m.scoreB)) {
+            stats[m.playerA].wins++;
+            stats[m.playerB].lost++;
+          } else if (Number(m.scoreB) > Number(m.scoreA)) {
+            stats[m.playerB].wins++;
+            stats[m.playerA].lost++;
+          }
+        });
+      } else {
+        // Doubles individual standings
+        const matches = (periodKey === 'ALL') ? state.doublesMatches : state.doublesMatches.filter(m => m.date.startsWith(periodKey));
+        matches.forEach(m => {
+          const teamAPlayers = Array.isArray(m.teamA) ? m.teamA : [];
+          const teamBPlayers = Array.isArray(m.teamB) ? m.teamB : [];
+          const scoreA = Number(m.scoreA);
+          const scoreB = Number(m.scoreB);
+          const teamAWon = scoreA > scoreB;
+
+          teamAPlayers.forEach(p => {
+            if (!stats[p]) stats[p] = { name: p, played: 0, wins: 0, lost: 0, winPct: 0, ptsWon: 0, ptsConceded: 0 };
+            stats[p].played++;
+            stats[p].ptsWon += scoreA;
+            stats[p].ptsConceded += scoreB;
+            if (teamAWon) stats[p].wins++; else stats[p].lost++;
+          });
+
+          teamBPlayers.forEach(p => {
+            if (!stats[p]) stats[p] = { name: p, played: 0, wins: 0, lost: 0, winPct: 0, ptsWon: 0, ptsConceded: 0 };
+            stats[p].played++;
+            stats[p].ptsWon += scoreB;
+            stats[p].ptsConceded += scoreA;
+            if (!teamAWon) stats[p].wins++; else stats[p].lost++;
+          });
+        });
+      }
 
       Object.values(stats).forEach(s => {
         s.winPct = s.played > 0 ? Math.round((s.wins / s.played) * 100) : 0;
       });
 
       const list = Object.values(stats);
-
       list.sort((a, b) => {
         if (b.wins !== a.wins) return b.wins - a.wins;
         if (b.ptsWon !== a.ptsWon) return b.ptsWon - a.ptsWon;
@@ -897,63 +1156,163 @@
       return list;
     }
 
-    // --- Computation Logic: Head-to-Head ---
-    function calculateH2H(playerA, playerB, periodKey) {
-      const allMatches = getPeriodMatches(periodKey);
-      const h2hMatches = allMatches.filter(m => 
-        (m.playerA === playerA && m.playerB === playerB) ||
-        (m.playerA === playerB && m.playerB === playerA)
-      );
+    // Doubles Pair Standings (Duo synergy)
+    function calculateDoublesPairs(periodKey) {
+      const matches = (periodKey === 'ALL') ? state.doublesMatches : state.doublesMatches.filter(m => m.date.startsWith(periodKey));
+      const pairStats = {};
 
-      let winsA = 0;
-      let winsB = 0;
-      let ptsA = 0;
-      let ptsB = 0;
+      matches.forEach(m => {
+        const makePairKey = (arr) => [...arr].sort().join(' & ');
+        const pairA = makePairKey(m.teamA);
+        const pairB = makePairKey(m.teamB);
+        const scoreA = Number(m.scoreA);
+        const scoreB = Number(m.scoreB);
 
-      h2hMatches.forEach(m => {
-        const scoreA = m.playerA === playerA ? Number(m.scoreA) : Number(m.scoreB);
-        const scoreB = m.playerA === playerA ? Number(m.scoreB) : Number(m.scoreA);
+        if (!pairStats[pairA]) pairStats[pairA] = { pair: pairA, played: 0, wins: 0, lost: 0, ptsWon: 0, ptsConceded: 0 };
+        if (!pairStats[pairB]) pairStats[pairB] = { pair: pairB, played: 0, wins: 0, lost: 0, ptsWon: 0, ptsConceded: 0 };
 
-        ptsA += scoreA;
-        ptsB += scoreB;
+        pairStats[pairA].played++;
+        pairStats[pairB].played++;
+        pairStats[pairA].ptsWon += scoreA;
+        pairStats[pairB].ptsWon += scoreB;
+        pairStats[pairA].ptsConceded += scoreB;
+        pairStats[pairB].ptsConceded += scoreA;
 
-        if (scoreA > scoreB) winsA++;
-        else if (scoreB > scoreA) winsB++;
+        if (scoreA > scoreB) {
+          pairStats[pairA].wins++;
+          pairStats[pairB].lost++;
+        } else {
+          pairStats[pairB].wins++;
+          pairStats[pairA].lost++;
+        }
       });
 
-      const total = h2hMatches.length;
-      const rateA = total > 0 ? Math.round((winsA / total) * 100) : 0;
-      const rateB = total > 0 ? Math.round((winsB / total) * 100) : 0;
+      const list = Object.values(pairStats);
+      list.forEach(p => {
+        p.winPct = p.played > 0 ? Math.round((p.wins / p.played) * 100) : 0;
+      });
+      list.sort((a, b) => (b.wins !== a.wins ? b.wins - a.wins : b.ptsWon - a.ptsWon));
+      return list;
+    }
 
-      return {
-        playerA,
-        playerB,
-        total,
-        winsA,
-        winsB,
-        ptsA,
-        ptsB,
-        rateA,
-        rateB,
-        matches: h2hMatches
-      };
+    // --- Mode & Tab Switching ---
+    function switchGameMode(mode) {
+      currentGameMode = mode;
+      const btnSingles = document.getElementById('mode-btn-singles');
+      const btnDoubles = document.getElementById('mode-btn-doubles');
+      const subTitle = document.getElementById('header-mode-subtitle');
+      const menuAdjudgeText = document.getElementById('menu-adjudge-text');
+
+      if (mode === 'singles') {
+        btnSingles.className = 'flex-1 py-1.5 rounded-lg text-center transition-all bg-[#1b2b23] text-white shadow-sm flex items-center justify-center gap-1.5 border border-[#2e473b] font-semibold';
+        btnDoubles.className = 'flex-1 py-1.5 rounded-lg text-center transition-all text-[#789085] hover:text-[#c4d4cc] flex items-center justify-center gap-1.5 border border-transparent';
+        if (subTitle) subTitle.textContent = 'SINGLES TRACKER (1v1)';
+        if (menuAdjudgeText) menuAdjudgeText.textContent = 'Adjudge Singles Winner';
+      } else {
+        btnDoubles.className = 'flex-1 py-1.5 rounded-lg text-center transition-all bg-[#261d0f] text-[#fcd34d] shadow-sm flex items-center justify-center gap-1.5 border border-[#523d1d] font-semibold';
+        btnSingles.className = 'flex-1 py-1.5 rounded-lg text-center transition-all text-[#789085] hover:text-[#c4d4cc] flex items-center justify-center gap-1.5 border border-transparent';
+        if (subTitle) subTitle.textContent = 'DOUBLES TRACKER (2v2)';
+        if (menuAdjudgeText) menuAdjudgeText.textContent = 'Adjudge Doubles Winner';
+      }
+
+      // Toggle form visibilities in Log tab
+      const fSingles = document.getElementById('singles-match-form');
+      const fDoubles = document.getElementById('doubles-match-form');
+      if (fSingles && fDoubles) {
+        if (mode === 'singles') {
+          fSingles.classList.remove('hidden');
+          fDoubles.classList.add('hidden');
+        } else {
+          fSingles.classList.add('hidden');
+          fDoubles.classList.remove('hidden');
+        }
+      }
+
+      // Toggle H2H picker
+      const h2hSingles = document.getElementById('h2h-picker-singles');
+      const h2hDoubles = document.getElementById('h2h-picker-doubles');
+      if (h2hSingles && h2hDoubles) {
+        if (mode === 'singles') {
+          h2hSingles.classList.remove('hidden');
+          h2hDoubles.classList.add('hidden');
+        } else {
+          h2hSingles.classList.add('hidden');
+          h2hDoubles.classList.remove('hidden');
+        }
+      }
+
+      // Toggle doubles pairs in standings
+      const pairsSec = document.getElementById('doubles-pairs-section');
+      if (pairsSec) {
+        if (mode === 'doubles') pairsSec.classList.remove('hidden');
+        else pairsSec.classList.add('hidden');
+      }
+
+      renderAll();
+    }
+
+    function switchTab(tabId) {
+      activeTab = tabId;
+      const tabs = [
+        { id: 'standings', btn: document.getElementById('tab-standings'), view: document.getElementById('view-standings') },
+        { id: 'h2h', btn: document.getElementById('tab-h2h'), view: document.getElementById('view-h2h') },
+        { id: 'log', btn: document.getElementById('tab-log'), view: document.getElementById('view-log') },
+      ];
+
+      tabs.forEach(t => {
+        if (!t.btn || !t.view) return;
+        const isActive = t.id === tabId;
+        const ind = t.btn.querySelector('.active-indicator');
+        if (isActive) {
+          t.btn.classList.add('text-white', 'font-semibold');
+          t.btn.classList.remove('text-[#789085]', 'font-medium');
+          if (ind) ind.classList.remove('hidden');
+          t.view.classList.remove('hidden');
+        } else {
+          t.btn.classList.remove('text-white', 'font-semibold');
+          t.btn.classList.add('text-[#789085]', 'font-medium');
+          if (ind) ind.classList.add('hidden');
+          t.view.classList.add('hidden');
+        }
+      });
+
+      if (tabId === 'standings') renderStandings();
+      if (tabId === 'h2h') renderH2H();
+      if (tabId === 'log') {
+        renderMatchesList();
+        renderPlayerChips();
+      }
+    }
+
+    function handlePeriodChange(e) {
+      currentPeriod = e.target.value;
+      renderStandings();
+      renderH2H();
+      renderMatchesList();
+    }
+
+    function toggleOptionsMenu(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.toggle('hidden');
     }
 
     // --- Render Functions ---
-
     function renderAll() {
       renderPeriodDropdown();
       renderStandings();
       renderH2H();
       renderMatchesList();
       renderPlayerChips();
-      populateFormPlayers();
+      populateSinglesFormPlayers();
+      populateDoublesFormPlayers();
       updateLiveTime();
     }
 
     function renderPeriodDropdown() {
       const periods = new Set(['2026-10']);
-      state.matches.forEach(m => {
+      const allMatches = [...state.matches, ...state.doublesMatches];
+      allMatches.forEach(m => {
         if (m.date && m.date.length >= 7) {
           periods.add(m.date.substring(0, 7));
         }
@@ -963,6 +1322,7 @@
 
       const sortedPeriods = Array.from(periods).sort().reverse();
       const select = document.getElementById('period-select');
+      if (!select) return;
       select.innerHTML = '';
 
       sortedPeriods.forEach(p => {
@@ -981,13 +1341,23 @@
     }
 
     function renderStandings() {
-      const standings = calculateStandings(currentPeriod);
-      const matches = getPeriodMatches(currentPeriod);
+      const standings = calculateStandings(currentPeriod, currentGameMode);
+      const matches = getCurrentMatchesList();
       const periodLabel = getPeriodLabel(currentPeriod).toUpperCase();
+      const modeUpper = currentGameMode.toUpperCase();
 
-      const isCompleted = state.adjudgedWinners && state.adjudgedWinners[currentPeriod];
-      const badgeText = isCompleted ? `CHAMPION · ${periodLabel}` : `LEADING · ${periodLabel}`;
-      document.getElementById('leading-badge-text').textContent = badgeText;
+      const adjudgedObj = state.adjudgedWinners && state.adjudgedWinners[currentGameMode];
+      const isCompleted = adjudgedObj && adjudgedObj[currentPeriod];
+
+      const badgeText = isCompleted ? `CHAMPION · ${periodLabel} (${modeUpper})` : `LEADING · ${periodLabel} (${modeUpper})`;
+      const badgeEl = document.getElementById('leading-badge-text');
+      if (badgeEl) badgeEl.textContent = badgeText;
+
+      const titleEl = document.getElementById('standings-table-title');
+      if (titleEl) titleEl.textContent = `${modeUpper} STANDINGS`;
+
+      const pillEl = document.getElementById('standings-mode-pill');
+      if (pillEl) pillEl.textContent = modeUpper;
 
       const leadingCard = document.getElementById('leading-card');
       const leadingName = document.getElementById('leading-player-name');
@@ -996,235 +1366,509 @@
 
       if (standings.length > 0 && standings[0].played > 0) {
         const leader = standings[0];
-        leadingName.textContent = leader.name;
-        leadingStats.textContent = `${leader.wins} wins · ${leader.ptsWon} points won`;
+        if (leadingName) leadingName.textContent = leader.name;
+        if (leadingStats) leadingStats.textContent = `${leader.wins} wins · ${leader.ptsWon} points won (${leader.winPct}% win rate)`;
 
-        if (standings.length > 1 && standings[1].wins === leader.wins && leader.wins > 0) {
-          leadingTieNote.classList.remove('hidden');
-          leadingTieNote.textContent = `Wins tied! Leading on points (${leader.ptsWon} vs ${standings[1].ptsWon})`;
-        } else {
-          leadingTieNote.classList.add('hidden');
+        if (leadingTieNote) {
+          if (standings.length > 1 && standings[1].wins === leader.wins && leader.wins > 0) {
+            leadingTieNote.classList.remove('hidden');
+            leadingTieNote.textContent = `Wins tied! Leading on points (${leader.ptsWon} vs ${standings[1].ptsWon})`;
+          } else {
+            leadingTieNote.classList.add('hidden');
+          }
         }
-
-        leadingCard.classList.remove('opacity-60');
+        if (leadingCard) leadingCard.classList.remove('opacity-60');
       } else {
-        leadingName.textContent = state.players[0] || 'No Players';
-        leadingStats.textContent = '0 wins · 0 points won';
-        leadingTieNote.classList.add('hidden');
-        leadingCard.classList.add('opacity-60');
+        if (leadingName) leadingName.textContent = state.players[0] || 'No Players';
+        if (leadingStats) leadingStats.textContent = '0 wins · 0 points won';
+        if (leadingTieNote) leadingTieNote.classList.add('hidden');
+        if (leadingCard) leadingCard.classList.add('opacity-60');
       }
 
+      // Render Table
       const tbody = document.getElementById('standings-table-body');
-      tbody.innerHTML = '';
+      if (tbody) {
+        tbody.innerHTML = '';
+        const visiblePlayers = standings.filter(s => s.played > 0 || state.players.includes(s.name));
 
-      const visiblePlayers = standings.filter(s => s.played > 0 || state.players.includes(s.name));
+        visiblePlayers.forEach((s, idx) => {
+          const rank = idx + 1;
+          const isFirst = rank === 1 && s.played > 0;
+          const row = document.createElement('div');
+          row.className = `grid grid-cols-12 items-center text-xs px-3 py-2.5 rounded-xl transition-all ${
+            isFirst 
+              ? 'bg-[#251c10] border border-[#523a19] text-[#fcd34d] font-semibold shadow-md' 
+              : 'bg-[#14221b] border border-[#1e2f28] text-[#c4d4cc]'
+          }`;
 
-      visiblePlayers.forEach((s, idx) => {
-        const rank = idx + 1;
-        const isFirst = rank === 1 && s.played > 0;
+          row.innerHTML = `
+            <div class="col-span-1 text-center font-bold text-sm ${isFirst ? 'text-[#e5a93c]' : 'text-[#6e857b]'}">${rank}</div>
+            <div class="col-span-3 font-bold truncate ${isFirst ? 'text-white text-sm' : 'text-[#e3ebe7]'}">${escapeHtml(s.name)}</div>
+            <div class="col-span-2 text-right ${isFirst ? 'text-white' : 'text-[#8fa39a]'}">${s.played}</div>
+            <div class="col-span-2 text-right font-bold text-sm ${isFirst ? 'text-[#e5a93c]' : 'text-white'}">${s.wins}</div>
+            <div class="col-span-1 text-right text-[#6e857b]">${s.lost}</div>
+            <div class="col-span-1 text-right text-[#8fa39a]">${s.winPct}%</div>
+            <div class="col-span-2 text-right font-semibold ${isFirst ? 'text-white' : 'text-[#a3b8af]'}">${s.ptsWon}</div>
+          `;
+          tbody.appendChild(row);
+        });
+      }
 
-        const row = document.createElement('div');
-        row.className = `grid grid-cols-12 items-center text-xs px-3 py-2.5 rounded-xl transition-all ${
-          isFirst 
-            ? 'bg-[#251c10] border border-[#523a19] text-[#fcd34d] font-semibold shadow-md' 
-            : 'bg-[#14221b] border border-[#1e2f28] text-[#c4d4cc]'
-        }`;
+      // Render Doubles Pairs if in Doubles Mode
+      if (currentGameMode === 'doubles') {
+        const pairsContainer = document.getElementById('doubles-pairs-container');
+        if (pairsContainer) {
+          pairsContainer.innerHTML = '';
+          const pairs = calculateDoublesPairs(currentPeriod);
+          if (pairs.length === 0) {
+            pairsContainer.innerHTML = '<div class="text-xs text-[#6e857b] py-2 text-center bg-[#14221b] border border-[#22352c] rounded-xl">No doubles matches logged in this period.</div>';
+          } else {
+            pairs.forEach((p, idx) => {
+              const div = document.createElement('div');
+              div.className = 'flex items-center justify-between p-2.5 bg-[#14221b] border border-[#1e2f28] rounded-xl text-xs';
+              div.innerHTML = `
+                <div class="flex items-center gap-2">
+                  <span class="font-bebas text-sm text-[#e5a93c]">#${idx + 1}</span>
+                  <span class="font-bold text-white">${escapeHtml(p.pair)}</span>
+                </div>
+                <div class="text-right text-[#9eb4aa]">
+                  <span class="font-semibold text-white">${p.wins}W - ${p.lost}L</span>
+                  <span class="text-[10px] text-[#6e857b] ml-1">(${p.winPct}%)</span>
+                </div>
+              `;
+              pairsContainer.appendChild(div);
+            });
+          }
+        }
+      }
 
-        row.innerHTML = `
-          <div class="col-span-1 text-center font-bold text-sm ${isFirst ? 'text-[#e5a93c]' : 'text-[#6e857b]'}">${rank}</div>
-          <div class="col-span-3 font-bold truncate ${isFirst ? 'text-white text-sm' : 'text-[#e3ebe7]'}">${escapeHtml(s.name)}</div>
-          <div class="col-span-2 text-right ${isFirst ? 'text-white' : 'text-[#8fa39a]'}">${s.played}</div>
-          <div class="col-span-2 text-right font-bold text-sm ${isFirst ? 'text-[#e5a93c]' : 'text-white'}">${s.wins}</div>
-          <div class="col-span-1 text-right text-[#6e857b]">${s.lost}</div>
-          <div class="col-span-1 text-right text-[#8fa39a]">${s.winPct}%</div>
-          <div class="col-span-2 text-right font-semibold ${isFirst ? 'text-white' : 'text-[#a3b8af]'}">${s.ptsWon}</div>
-        `;
+      // Mini stats
+      const stMatches = document.getElementById('stat-total-matches');
+      if (stMatches) stMatches.textContent = matches.length;
 
-        tbody.appendChild(row);
-      });
-
-      document.getElementById('stat-total-matches').textContent = matches.length;
       const totalPoints = matches.reduce((acc, m) => acc + Number(m.scoreA) + Number(m.scoreB), 0);
-      document.getElementById('stat-total-points').textContent = totalPoints;
-      document.getElementById('stat-avg-points').textContent = matches.length > 0 ? (totalPoints / matches.length).toFixed(1) : '0';
+      const stPts = document.getElementById('stat-total-points');
+      if (stPts) stPts.textContent = totalPoints;
+
+      const stAvg = document.getElementById('stat-avg-points');
+      if (stAvg) stAvg.textContent = matches.length > 0 ? (totalPoints / matches.length).toFixed(1) : '0';
+    }
+
+    function setDoublesH2HMode(mode) {
+      doublesH2HMode = mode;
+      const btnPlayers = document.getElementById('h2h-doubles-mode-players');
+      const btnTeams = document.getElementById('h2h-doubles-mode-teams');
+      const cPlayers = document.getElementById('doubles-h2h-players-container');
+      const cTeams = document.getElementById('doubles-h2h-teams-container');
+
+      if (mode === 'players') {
+        btnPlayers.className = 'px-2 py-0.5 rounded bg-[#1f3227] text-[#48a97c] font-semibold border border-[#2d4b3b]';
+        btnTeams.className = 'px-2 py-0.5 rounded bg-[#101915] text-[#738b81] font-medium border border-[#25392f]';
+        cPlayers.classList.remove('hidden');
+        cTeams.classList.add('hidden');
+      } else {
+        btnTeams.className = 'px-2 py-0.5 rounded bg-[#271d0e] text-[#fcd34d] font-semibold border border-[#523d19]';
+        btnPlayers.className = 'px-2 py-0.5 rounded bg-[#101915] text-[#738b81] font-medium border border-[#25392f]';
+        cPlayers.classList.add('hidden');
+        cTeams.classList.remove('hidden');
+      }
+      updateH2HView();
     }
 
     function renderH2H() {
-      const playerASelect = document.getElementById('h2h-player-a');
-      const playerBSelect = document.getElementById('h2h-player-b');
-
-      const currentA = playerASelect.value;
-      const currentB = playerBSelect.value;
-
-      playerASelect.innerHTML = '';
-      playerBSelect.innerHTML = '';
-
-      state.players.forEach(p => {
-        const optA = document.createElement('option');
-        optA.value = p;
-        optA.textContent = p;
-        playerASelect.appendChild(optA);
-
-        const optB = document.createElement('option');
-        optB.value = p;
-        optB.textContent = p;
-        playerBSelect.appendChild(optB);
-      });
-
-      if (state.players.includes(currentA)) {
-        playerASelect.value = currentA;
-      } else {
-        playerASelect.value = state.players[0] || '';
+      // Singles options
+      const sA = document.getElementById('h2h-player-a');
+      const sB = document.getElementById('h2h-player-b');
+      if (sA && sB) {
+        populateSelect(sA, state.players, sA.value || state.players[0]);
+        populateSelect(sB, state.players, sB.value || state.players[1] || state.players[0]);
       }
 
-      if (state.players.includes(currentB) && currentB !== playerASelect.value) {
-        playerBSelect.value = currentB;
-      } else {
-        const other = state.players.find(p => p !== playerASelect.value);
-        playerBSelect.value = other || state.players[0] || '';
+      // Doubles Player vs Player options
+      const dPA = document.getElementById('h2h-d-player-a');
+      const dPB = document.getElementById('h2h-d-player-b');
+      if (dPA && dPB) {
+        populateSelect(dPA, state.players, dPA.value || state.players[0]);
+        populateSelect(dPB, state.players, dPB.value || state.players[1] || state.players[0]);
+      }
+
+      // Doubles Team vs Team options
+      const tA1 = document.getElementById('h2h-team-a1');
+      const tA2 = document.getElementById('h2h-team-a2');
+      const tB1 = document.getElementById('h2h-team-b1');
+      const tB2 = document.getElementById('h2h-team-b2');
+      if (tA1 && tA2 && tB1 && tB2) {
+        populateSelect(tA1, state.players, tA1.value || state.players[0]);
+        populateSelect(tA2, state.players, tA2.value || state.players[1]);
+        populateSelect(tB1, state.players, tB1.value || state.players[2] || state.players[0]);
+        populateSelect(tB2, state.players, tB2.value || state.players[3] || state.players[1]);
       }
 
       updateH2HView();
     }
 
+    function populateSelect(el, list, selectedVal) {
+      if (!el) return;
+      el.innerHTML = '';
+      list.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        if (item === selectedVal) opt.selected = true;
+        el.appendChild(opt);
+      });
+    }
+
     function updateH2HView() {
-      const pA = document.getElementById('h2h-player-a').value;
-      const pB = document.getElementById('h2h-player-b').value;
+      const card = document.getElementById('h2h-card');
+      const nameA = document.getElementById('h2h-name-a');
+      const nameB = document.getElementById('h2h-name-b');
+      const winsA = document.getElementById('h2h-wins-a');
+      const winsB = document.getElementById('h2h-wins-b');
+      const matchesCount = document.getElementById('h2h-matches-count');
+      const matchesList = document.getElementById('h2h-matches-list');
+      const diffEl = document.getElementById('h2h-diff');
+      const avgEl = document.getElementById('h2h-avg');
+      const streakEl = document.getElementById('h2h-streak');
+      const chemCard = document.getElementById('doubles-chemistry-card');
 
-      if (!pA || !pB || pA === pB) {
-        document.getElementById('h2h-card').classList.add('opacity-50');
-        document.getElementById('h2h-name-a').textContent = pA || 'Player 1';
-        document.getElementById('h2h-name-b').textContent = pB || 'Player 2';
-        document.getElementById('h2h-wins-a').textContent = '0';
-        document.getElementById('h2h-wins-b').textContent = '0';
-        document.getElementById('h2h-matches-count').textContent = '0 MATCHES';
-        document.getElementById('h2h-matches-list').innerHTML = '<div class="text-xs text-[#6e857b] py-2 text-center">Select two different players</div>';
-        return;
-      }
+      if (!card) return;
 
-      document.getElementById('h2h-card').classList.remove('opacity-50');
-      const h2h = calculateH2H(pA, pB, currentPeriod);
+      if (currentGameMode === 'singles') {
+        if (chemCard) chemCard.classList.add('hidden');
+        const pAEl = document.getElementById('h2h-player-a');
+        const pBEl = document.getElementById('h2h-player-b');
+        if (!pAEl || !pBEl) return;
+        const pA = pAEl.value;
+        const pB = pBEl.value;
 
-      document.getElementById('h2h-name-a').textContent = pA;
-      document.getElementById('h2h-name-b').textContent = pB;
-      document.getElementById('h2h-wins-a').textContent = h2h.winsA;
-      document.getElementById('h2h-wins-b').textContent = h2h.winsB;
-      document.getElementById('h2h-rate-a').textContent = `${h2h.rateA}% win rate`;
-      document.getElementById('h2h-rate-b').textContent = `${h2h.rateB}% win rate`;
-      document.getElementById('h2h-matches-count').textContent = `${h2h.total} ${h2h.total === 1 ? 'MATCH' : 'MATCHES'}`;
+        if (!pA || !pB || pA === pB) {
+          card.classList.add('opacity-50');
+          nameA.textContent = pA || 'Player 1';
+          nameB.textContent = pB || 'Player 2';
+          winsA.textContent = '0';
+          winsB.textContent = '0';
+          matchesCount.textContent = '0 MATCHES';
+          if (matchesList) matchesList.innerHTML = '<div class="text-xs text-[#6e857b] py-2 text-center">Select two different players</div>';
+          return;
+        }
 
-      let barPercentA = 50;
-      let barPercentB = 50;
-      if (h2h.total > 0) {
-        barPercentA = Math.round((h2h.winsA / h2h.total) * 100);
-        barPercentB = 100 - barPercentA;
-      }
-      document.getElementById('h2h-bar-a').style.width = `${barPercentA}%`;
-      document.getElementById('h2h-bar-b').style.width = `${barPercentB}%`;
-      document.getElementById('h2h-pts-a').textContent = `${h2h.ptsA} pts`;
-      document.getElementById('h2h-pts-b').textContent = `${h2h.ptsB} pts`;
+        card.classList.remove('opacity-50');
+        const allMatches = (currentPeriod === 'ALL') ? state.matches : state.matches.filter(m => m.date.startsWith(currentPeriod));
+        const h2hMatches = allMatches.filter(m => (m.playerA === pA && m.playerB === pB) || (m.playerA === pB && m.playerB === pA));
 
-      const diff = h2h.ptsA - h2h.ptsB;
-      let diffText = 'Tied on points';
-      if (diff > 0) diffText = `+${diff} for ${pA}`;
-      else if (diff < 0) diffText = `+${Math.abs(diff)} for ${pB}`;
-      document.getElementById('h2h-diff').textContent = diffText;
+        let wA = 0, wB = 0, ptsA = 0, ptsB = 0;
+        h2hMatches.forEach(m => {
+          const sA = (m.playerA === pA) ? Number(m.scoreA) : Number(m.scoreB);
+          const sB = (m.playerA === pA) ? Number(m.scoreB) : Number(m.scoreA);
+          ptsA += sA;
+          ptsB += sB;
+          if (sA > sB) wA++; else wB++;
+        });
 
-      const avgA = h2h.total > 0 ? (h2h.ptsA / h2h.total).toFixed(1) : '0';
-      const avgB = h2h.total > 0 ? (h2h.ptsB / h2h.total).toFixed(1) : '0';
-      document.getElementById('h2h-avg').textContent = `${avgA} vs ${avgB}`;
+        renderH2HCardDisplay(pA, pB, wA, wB, ptsA, ptsB, h2hMatches, false);
 
-      let streakPlayer = null;
-      let streakCount = 0;
-      for (let i = h2h.matches.length - 1; i >= 0; i--) {
-        const m = h2h.matches[i];
-        const winner = Number(m.scoreA) > Number(m.scoreB) ? m.playerA : m.playerB;
-        if (!streakPlayer) {
-          streakPlayer = winner;
-          streakCount = 1;
-        } else if (winner === streakPlayer) {
-          streakCount++;
+      } else {
+        // Doubles mode
+        if (doublesH2HMode === 'players') {
+          // Player vs Player across all doubles matches
+          const pAEl = document.getElementById('h2h-d-player-a');
+          const pBEl = document.getElementById('h2h-d-player-b');
+          if (!pAEl || !pBEl) return;
+          const pA = pAEl.value;
+          const pB = pBEl.value;
+
+          if (!pA || !pB || pA === pB) {
+            card.classList.add('opacity-50');
+            nameA.textContent = pA || 'Player 1';
+            nameB.textContent = pB || 'Player 2';
+            winsA.textContent = '0';
+            winsB.textContent = '0';
+            matchesCount.textContent = '0 MATCHES';
+            if (chemCard) chemCard.classList.add('hidden');
+            if (matchesList) matchesList.innerHTML = '<div class="text-xs text-[#6e857b] py-2 text-center">Select two different players</div>';
+            return;
+          }
+
+          card.classList.remove('opacity-50');
+          const allMatches = (currentPeriod === 'ALL') ? state.doublesMatches : state.doublesMatches.filter(m => m.date.startsWith(currentPeriod));
+          
+          // Opposing matches
+          const opposingMatches = allMatches.filter(m => 
+            (m.teamA.includes(pA) && m.teamB.includes(pB)) ||
+            (m.teamA.includes(pB) && m.teamB.includes(pA))
+          );
+
+          // Teaming up together matches
+          const partnerMatches = allMatches.filter(m =>
+            (m.teamA.includes(pA) && m.teamA.includes(pB)) ||
+            (m.teamB.includes(pA) && m.teamB.includes(pB))
+          );
+
+          let wA = 0, wB = 0, ptsA = 0, ptsB = 0;
+          opposingMatches.forEach(m => {
+            const isTeamA = m.teamA.includes(pA);
+            const scoreMine = isTeamA ? Number(m.scoreA) : Number(m.scoreB);
+            const scoreOpp = isTeamA ? Number(m.scoreB) : Number(m.scoreA);
+            ptsA += scoreMine;
+            ptsB += scoreOpp;
+            if (scoreMine > scoreOpp) wA++; else wB++;
+          });
+
+          renderH2HCardDisplay(pA, pB, wA, wB, ptsA, ptsB, opposingMatches, true);
+
+          // Render chemistry card
+          if (chemCard) {
+            chemCard.classList.remove('hidden');
+            let partWins = 0, partPts = 0;
+            partnerMatches.forEach(m => {
+              const onTeamA = m.teamA.includes(pA);
+              const myScore = onTeamA ? Number(m.scoreA) : Number(m.scoreB);
+              const oppScore = onTeamA ? Number(m.scoreB) : Number(m.scoreA);
+              partPts += myScore;
+              if (myScore > oppScore) partWins++;
+            });
+            const partLosses = partnerMatches.length - partWins;
+            const chemRateEl = document.getElementById('h2h-chemistry-rate');
+            const chemRecordEl = document.getElementById('h2h-chemistry-record');
+            const chemPtsEl = document.getElementById('h2h-chemistry-pts');
+
+            const rateStr = partnerMatches.length > 0 ? `${Math.round((partWins / partnerMatches.length) * 100)}% Win` : 'No Games';
+            if (chemRateEl) chemRateEl.textContent = rateStr;
+            if (chemRecordEl) chemRecordEl.textContent = `Partnered ${partnerMatches.length} games: ${partWins} Wins, ${partLosses} Losses`;
+            if (chemPtsEl) chemPtsEl.textContent = `${partPts} total pts scored`;
+          }
+
         } else {
-          break;
+          // Team vs Team
+          if (chemCard) chemCard.classList.add('hidden');
+          const tA1 = document.getElementById('h2h-team-a1').value;
+          const tA2 = document.getElementById('h2h-team-a2').value;
+          const tB1 = document.getElementById('h2h-team-b1').value;
+          const tB2 = document.getElementById('h2h-team-b2').value;
+
+          const pairA = [tA1, tA2].sort().join(' & ');
+          const pairB = [tB1, tB2].sort().join(' & ');
+
+          if (tA1 === tA2 || tB1 === tB2 || pairA === pairB) {
+            card.classList.add('opacity-50');
+            nameA.textContent = pairA || 'Pair 1';
+            nameB.textContent = pairB || 'Pair 2';
+            winsA.textContent = '0';
+            winsB.textContent = '0';
+            matchesCount.textContent = '0 MATCHES';
+            if (matchesList) matchesList.innerHTML = '<div class="text-xs text-[#6e857b] py-2 text-center">Select two distinct pairs</div>';
+            return;
+          }
+
+          card.classList.remove('opacity-50');
+          const allMatches = (currentPeriod === 'ALL') ? state.doublesMatches : state.doublesMatches.filter(m => m.date.startsWith(currentPeriod));
+
+          const makeKey = (arr) => [...arr].sort().join(' & ');
+          const teamMatches = allMatches.filter(m => 
+            (makeKey(m.teamA) === pairA && makeKey(m.teamB) === pairB) ||
+            (makeKey(m.teamA) === pairB && makeKey(m.teamB) === pairA)
+          );
+
+          let wA = 0, wB = 0, ptsA = 0, ptsB = 0;
+          teamMatches.forEach(m => {
+            const isPairAOnTeamA = makeKey(m.teamA) === pairA;
+            const sA = isPairAOnTeamA ? Number(m.scoreA) : Number(m.scoreB);
+            const sB = isPairAOnTeamA ? Number(m.scoreB) : Number(m.scoreA);
+            ptsA += sA;
+            ptsB += sB;
+            if (sA > sB) wA++; else wB++;
+          });
+
+          renderH2HCardDisplay(pairA, pairB, wA, wB, ptsA, ptsB, teamMatches, true);
         }
       }
-      document.getElementById('h2h-streak').textContent = streakPlayer ? `${streakPlayer} (${streakCount} ${streakCount === 1 ? 'win' : 'wins'})` : 'None';
+    }
 
-      const listContainer = document.getElementById('h2h-matches-list');
-      listContainer.innerHTML = '';
+    function renderH2HCardDisplay(name1, name2, wA, wB, ptsA, ptsB, matches, isDoubles) {
+      const nameA = document.getElementById('h2h-name-a');
+      const nameB = document.getElementById('h2h-name-b');
+      const winsA = document.getElementById('h2h-wins-a');
+      const winsB = document.getElementById('h2h-wins-b');
+      const rateAEl = document.getElementById('h2h-rate-a');
+      const rateBEl = document.getElementById('h2h-rate-b');
+      const matchesCount = document.getElementById('h2h-matches-count');
+      const barA = document.getElementById('h2h-bar-a');
+      const barB = document.getElementById('h2h-bar-b');
+      const ptsAEl = document.getElementById('h2h-pts-a');
+      const ptsBEl = document.getElementById('h2h-pts-b');
+      const diffEl = document.getElementById('h2h-diff');
+      const avgEl = document.getElementById('h2h-avg');
+      const streakEl = document.getElementById('h2h-streak');
+      const matchesList = document.getElementById('h2h-matches-list');
 
-      if (h2h.matches.length === 0) {
-        listContainer.innerHTML = '<div class="text-xs text-[#6e857b] py-3 text-center bg-[#14221b] border border-[#22352c] rounded-xl">No matches played between them in this period.</div>';
-      } else {
-        const sorted = [...h2h.matches].reverse();
-        sorted.forEach(m => {
-          const isWinnerA = Number(m.scoreA) > Number(m.scoreB);
-          const item = document.createElement('div');
-          item.className = 'flex items-center justify-between p-2.5 bg-[#14221b] border border-[#1e2f28] rounded-xl text-xs';
-          item.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="font-bold ${m.playerA === (isWinnerA ? m.playerA : m.playerB) ? 'text-white' : 'text-[#8fa39a]'}">${escapeHtml(m.playerA)}</span>
-              <span class="font-bebas text-sm text-[#e5a93c] px-1.5 py-0.5 rounded bg-[#1d2a23]">${m.scoreA} - ${m.scoreB}</span>
-              <span class="font-bold ${m.playerB === (isWinnerA ? m.playerA : m.playerB) ? 'text-white' : 'text-[#8fa39a]'}">${escapeHtml(m.playerB)}</span>
-            </div>
-            <span class="text-[10px] text-[#6e857b]">${formatDateDisplay(m.date)}</span>
-          `;
-          listContainer.appendChild(item);
-        });
+      nameA.textContent = name1;
+      nameB.textContent = name2;
+      winsA.textContent = wA;
+      winsB.textContent = wB;
+
+      const total = matches.length;
+      matchesCount.textContent = `${total} ${total === 1 ? 'MATCH' : 'MATCHES'}`;
+
+      const rateA = total > 0 ? Math.round((wA / total) * 100) : 0;
+      const rateB = total > 0 ? Math.round((wB / total) * 100) : 0;
+      rateAEl.textContent = `${rateA}% win rate`;
+      rateBEl.textContent = `${rateB}% win rate`;
+
+      let barPercentA = 50;
+      if (total > 0) barPercentA = Math.round((wA / total) * 100);
+      barA.style.width = `${barPercentA}%`;
+      barB.style.width = `${100 - barPercentA}%`;
+
+      ptsAEl.textContent = `${ptsA} pts`;
+      ptsBEl.textContent = `${ptsB} pts`;
+
+      const diff = ptsA - ptsB;
+      if (diff > 0) diffEl.textContent = `+${diff} for ${name1}`;
+      else if (diff < 0) diffEl.textContent = `+${Math.abs(diff)} for ${name2}`;
+      else diffEl.textContent = 'Tied on points';
+
+      const avgA = total > 0 ? (ptsA / total).toFixed(1) : '0';
+      const avgB = total > 0 ? (ptsB / total).toFixed(1) : '0';
+      avgEl.textContent = `${avgA} vs ${avgB}`;
+
+      // Streak
+      let streakPlayer = null;
+      let streakCount = 0;
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const m = matches[i];
+        let winnerName = null;
+        if (!isDoubles) {
+          winnerName = Number(m.scoreA) > Number(m.scoreB) ? m.playerA : m.playerB;
+        } else {
+          const makeKey = (arr) => [...arr].sort().join(' & ');
+          const winTeam = Number(m.scoreA) > Number(m.scoreB) ? m.teamA : m.teamB;
+          if (winTeam.includes(name1)) winnerName = name1;
+          else if (winTeam.includes(name2)) winnerName = name2;
+          else if (makeKey(winTeam) === name1) winnerName = name1;
+          else if (makeKey(winTeam) === name2) winnerName = name2;
+        }
+
+        if (winnerName) {
+          if (!streakPlayer) {
+            streakPlayer = winnerName;
+            streakCount = 1;
+          } else if (winnerName === streakPlayer) {
+            streakCount++;
+          } else {
+            break;
+          }
+        }
+      }
+      streakEl.textContent = streakPlayer ? `${streakPlayer} (${streakCount} ${streakCount === 1 ? 'win' : 'wins'})` : 'None';
+
+      // Matches list
+      if (matchesList) {
+        matchesList.innerHTML = '';
+        if (matches.length === 0) {
+          matchesList.innerHTML = '<div class="text-xs text-[#6e857b] py-3 text-center bg-[#14221b] border border-[#22352c] rounded-xl">No matches played between them in this period.</div>';
+        } else {
+          const sorted = [...matches].reverse();
+          sorted.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between p-2.5 bg-[#14221b] border border-[#1e2f28] rounded-xl text-xs';
+
+            if (!isDoubles) {
+              item.innerHTML = `
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-white">${escapeHtml(m.playerA)}</span>
+                  <span class="font-bebas text-sm text-[#e5a93c] px-1.5 py-0.5 rounded bg-[#1d2a23]">${m.scoreA} - ${m.scoreB}</span>
+                  <span class="font-bold text-white">${escapeHtml(m.playerB)}</span>
+                </div>
+                <span class="text-[10px] text-[#6e857b]">${formatDateDisplay(m.date)}</span>
+              `;
+            } else {
+              const tA = m.teamA.join(' & ');
+              const tB = m.teamB.join(' & ');
+              item.innerHTML = `
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-white text-[11px]">${escapeHtml(tA)}</span>
+                    <span class="font-bebas text-sm text-[#e5a93c] px-1.5 py-0.5 rounded bg-[#1d2a23]">${m.scoreA} - ${m.scoreB}</span>
+                    <span class="font-bold text-white text-[11px]">${escapeHtml(tB)}</span>
+                  </div>
+                  <div class="text-[10px] text-[#6e857b]">${formatDateDisplay(m.date)}</div>
+                </div>
+              `;
+            }
+            matchesList.appendChild(item);
+          });
+        }
       }
     }
 
     function renderMatchesList() {
-      const matches = getPeriodMatches(currentPeriod);
+      const matches = getCurrentMatchesList();
       const periodLabel = getPeriodLabel(currentPeriod).toUpperCase();
-      document.getElementById('matches-header-title').textContent = `MATCHES · ${periodLabel} (${matches.length})`;
-      document.getElementById('matches-count-label').textContent = `${matches.length} matches`;
+      const modeLabel = currentGameMode.toUpperCase();
+
+      const titleEl = document.getElementById('matches-header-title');
+      if (titleEl) titleEl.textContent = `${modeLabel} MATCHES · ${periodLabel} (${matches.length})`;
+      
+      const countEl = document.getElementById('matches-count-label');
+      if (countEl) countEl.textContent = `${matches.length} matches`;
 
       const container = document.getElementById('matches-list-container');
+      if (!container) return;
       container.innerHTML = '';
 
       if (matches.length === 0) {
         container.innerHTML = `
           <div class="p-6 text-center text-xs text-[#6e857b] bg-[#14221b] border border-[#22352c] rounded-xl">
-            No matches logged for ${getPeriodLabel(currentPeriod)}. Use the form above to log a match!
+            No ${currentGameMode} matches logged for ${getPeriodLabel(currentPeriod)}. Use the form above to log a match!
           </div>
         `;
         return;
       }
 
-      const reversedMatches = [...matches].reverse();
-
-      reversedMatches.forEach(m => {
+      const reversed = [...matches].reverse();
+      reversed.forEach(m => {
         const item = document.createElement('div');
         item.className = 'flex items-center justify-between py-2.5 border-b border-[#1b2b23] last:border-0';
 
-        item.innerHTML = `
-          <div class="space-y-0.5">
-            <div class="text-sm">
-              <span class="font-bold text-white">${escapeHtml(m.playerA)}</span>
-              <span class="font-bebas text-lg tracking-wider text-white px-1.5">${m.scoreA} - ${m.scoreB}</span>
-              <span class="font-bold text-white">${escapeHtml(m.playerB)}</span>
+        if (currentGameMode === 'singles') {
+          item.innerHTML = `
+            <div class="space-y-0.5">
+              <div class="text-sm">
+                <span class="font-bold text-white">${escapeHtml(m.playerA)}</span>
+                <span class="font-bebas text-lg tracking-wider text-white px-1.5">${m.scoreA} - ${m.scoreB}</span>
+                <span class="font-bold text-white">${escapeHtml(m.playerB)}</span>
+              </div>
+              <div class="text-xs text-[#6e857b]">${formatDateDisplay(m.date)}</div>
             </div>
-            <div class="text-xs text-[#6e857b]">${formatDateDisplay(m.date)}</div>
-          </div>
-          <button data-match-id="${m.id}" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
-            Delete
-          </button>
-        `;
-
+            <button type="button" onclick="openDeleteModal('${m.id}', 'singles')" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
+              Delete
+            </button>
+          `;
+        } else {
+          const tA = Array.isArray(m.teamA) ? m.teamA.join(' & ') : 'Team A';
+          const tB = Array.isArray(m.teamB) ? m.teamB.join(' & ') : 'Team B';
+          item.innerHTML = `
+            <div class="space-y-0.5">
+              <div class="text-sm">
+                <span class="font-bold text-white">${escapeHtml(tA)}</span>
+                <span class="font-bebas text-lg tracking-wider text-white px-1.5">${m.scoreA} - ${m.scoreB}</span>
+                <span class="font-bold text-white">${escapeHtml(tB)}</span>
+              </div>
+              <div class="text-xs text-[#6e857b]">${formatDateDisplay(m.date)}</div>
+            </div>
+            <button type="button" onclick="openDeleteModal('${m.id}', 'doubles')" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
+              Delete
+            </button>
+          `;
+        }
         container.appendChild(item);
-      });
-
-      container.querySelectorAll('.btn-delete-match').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const matchId = e.currentTarget.getAttribute('data-match-id');
-          openDeleteModal(matchId);
-        });
       });
     }
 
     function renderPlayerChips() {
       const container = document.getElementById('players-chips-container');
+      if (!container) return;
       container.innerHTML = '';
 
       state.players.forEach(p => {
@@ -1232,51 +1876,34 @@
         chip.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#182721] border border-[#25392f] text-xs font-medium text-white';
         chip.innerHTML = `
           <span>${escapeHtml(p)}</span>
-          <button data-player="${escapeHtml(p)}" class="btn-remove-player text-[#738b81] hover:text-rose-400 text-xs ml-1 transition-colors">
+          <button type="button" onclick="openRemovePlayerModal('${escapeHtml(p)}')" class="btn-remove-player text-[#738b81] hover:text-rose-400 text-xs ml-1 transition-colors">
             Remove
           </button>
         `;
         container.appendChild(chip);
       });
-
-      container.querySelectorAll('.btn-remove-player').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const player = e.currentTarget.getAttribute('data-player');
-          openRemovePlayerModal(player);
-        });
-      });
     }
 
-    function populateFormPlayers() {
-      const selectA = document.getElementById('player-a-select');
-      const selectB = document.getElementById('player-b-select');
+    function populateSinglesFormPlayers() {
+      const selA = document.getElementById('player-a-select');
+      const selB = document.getElementById('player-b-select');
+      if (!selA || !selB) return;
 
-      const prevA = selectA.value;
-      const prevB = selectB.value;
+      populateSelect(selA, state.players, selA.value || state.players[0]);
+      populateSelect(selB, state.players, selB.value || state.players[1] || state.players[0]);
+    }
 
-      selectA.innerHTML = '';
-      selectB.innerHTML = '';
+    function populateDoublesFormPlayers() {
+      const a1 = document.getElementById('doubles-a1-select');
+      const a2 = document.getElementById('doubles-a2-select');
+      const b1 = document.getElementById('doubles-b1-select');
+      const b2 = document.getElementById('doubles-b2-select');
+      if (!a1 || !a2 || !b1 || !b2) return;
 
-      state.players.forEach(p => {
-        const optA = document.createElement('option');
-        optA.value = p;
-        optA.textContent = p;
-        selectA.appendChild(optA);
-
-        const optB = document.createElement('option');
-        optB.value = p;
-        optB.textContent = p;
-        selectB.appendChild(optB);
-      });
-
-      if (state.players.includes('Manish')) selectA.value = 'Manish';
-      else if (state.players.length > 0) selectA.value = state.players[0];
-
-      if (state.players.includes('Nitesh') && selectA.value !== 'Nitesh') selectB.value = 'Nitesh';
-      else {
-        const other = state.players.find(p => p !== selectA.value);
-        if (other) selectB.value = other;
-      }
+      populateSelect(a1, state.players, a1.value || state.players[0]);
+      populateSelect(a2, state.players, a2.value || state.players[1] || state.players[0]);
+      populateSelect(b1, state.players, b1.value || state.players[2] || state.players[0]);
+      populateSelect(b2, state.players, b2.value || state.players[3] || state.players[1] || state.players[0]);
     }
 
     function updateLiveTime() {
@@ -1284,7 +1911,7 @@
       const timeStr = now.toLocaleTimeString('en-US', { hour12: true });
       const el = document.getElementById('live-status-time');
       if (el) {
-        el.textContent = `You can log matches. Live, last checked ${timeStr}.`;
+        el.textContent = `Live match tracking. Last checked ${timeStr}.`;
       }
     }
 
@@ -1298,53 +1925,271 @@
         .replace(/'/g, '&#039;');
     }
 
-    // --- Modal & Action Handlers ---
+    // --- Interactive Form Handlers ---
+    function swapSinglesPlayers() {
+      const selA = document.getElementById('player-a-select');
+      const selB = document.getElementById('player-b-select');
+      if (!selA || !selB) return;
+      const vA = selA.value;
+      selA.value = selB.value;
+      selB.value = vA;
 
-    function openDeleteModal(matchId) {
-      matchPendingDeleteId = matchId;
-      const match = state.matches.find(m => m.id === matchId);
-      if (match) {
-        document.getElementById('delete-modal-desc').textContent = 
-          `Delete match between ${match.playerA} and ${match.playerB} (${match.scoreA}-${match.scoreB}) on ${formatDateDisplay(match.date)}?`;
+      const scA = document.getElementById('score-a-input');
+      const scB = document.getElementById('score-b-input');
+      if (scA && scB) {
+        const sv = scA.value;
+        scA.value = scB.value;
+        scB.value = sv;
       }
-      document.getElementById('modal-delete').classList.remove('hidden');
+    }
+
+    function swapDoublesTeams() {
+      const a1 = document.getElementById('doubles-a1-select');
+      const a2 = document.getElementById('doubles-a2-select');
+      const b1 = document.getElementById('doubles-b1-select');
+      const b2 = document.getElementById('doubles-b2-select');
+      if (!a1 || !a2 || !b1 || !b2) return;
+
+      const vA1 = a1.value, vA2 = a2.value;
+      a1.value = b1.value; a2.value = b2.value;
+      b1.value = vA1; b2.value = vA2;
+
+      const scA = document.getElementById('doubles-score-a');
+      const scB = document.getElementById('doubles-score-b');
+      if (scA && scB) {
+        const sv = scA.value;
+        scA.value = scB.value;
+        scB.value = sv;
+      }
+    }
+
+    function shuffleDoublesPartners() {
+      const a2 = document.getElementById('doubles-a2-select');
+      const b2 = document.getElementById('doubles-b2-select');
+      if (a2 && b2) {
+        const temp = a2.value;
+        a2.value = b2.value;
+        b2.value = temp;
+      }
+    }
+
+    function quickScoreSingles(sa, sb) {
+      const sA = document.getElementById('score-a-input');
+      const sB = document.getElementById('score-b-input');
+      if (sA) sA.value = sa;
+      if (sB) sB.value = sb;
+    }
+
+    function quickScoreDoubles(sa, sb) {
+      const sA = document.getElementById('doubles-score-a');
+      const sB = document.getElementById('doubles-score-b');
+      if (sA) sA.value = sa;
+      if (sB) sB.value = sb;
+    }
+
+    function handleSinglesMatchSubmit(e) {
+      if (e) e.preventDefault();
+      const errEl = document.getElementById('form-error-singles');
+      if (errEl) errEl.classList.add('hidden');
+
+      const pA = document.getElementById('player-a-select').value;
+      const pB = document.getElementById('player-b-select').value;
+      const sA = parseInt(document.getElementById('score-a-input').value, 10);
+      const sB = parseInt(document.getElementById('score-b-input').value, 10);
+      const dateVal = document.getElementById('date-played-input').value;
+
+      if (!pA || !pB || pA === pB) {
+        if (errEl) { errEl.textContent = 'Please choose two different players.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+      if (isNaN(sA) || isNaN(sB) || sA < 0 || sB < 0 || sA === sB) {
+        if (errEl) { errEl.textContent = 'Please enter valid badminton scores (no ties allowed).'; errEl.classList.remove('hidden'); }
+        return;
+      }
+      if (!dateVal) {
+        if (errEl) { errEl.textContent = 'Please choose the date played.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      const newMatch = {
+        id: 's_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        playerA: pA,
+        playerB: pB,
+        scoreA: sA,
+        scoreB: sB,
+        date: dateVal
+      };
+
+      state.matches.push(newMatch);
+      saveState();
+
+      currentPeriod = dateVal.substring(0, 7);
+      document.getElementById('score-a-input').value = '';
+      document.getElementById('score-b-input').value = '';
+
+      playSound('save');
+      renderAll();
+      showToast(`Singles match logged: ${pA} ${sA} - ${sB} ${pB}!`);
+    }
+
+    function handleDoublesMatchSubmit(e) {
+      if (e) e.preventDefault();
+      const errEl = document.getElementById('form-error-doubles');
+      if (errEl) errEl.classList.add('hidden');
+
+      const a1 = document.getElementById('doubles-a1-select').value;
+      const a2 = document.getElementById('doubles-a2-select').value;
+      const b1 = document.getElementById('doubles-b1-select').value;
+      const b2 = document.getElementById('doubles-b2-select').value;
+      const sA = parseInt(document.getElementById('doubles-score-a').value, 10);
+      const sB = parseInt(document.getElementById('doubles-score-b').value, 10);
+      const dateVal = document.getElementById('doubles-date-input').value;
+
+      const playerSet = new Set([a1, a2, b1, b2]);
+      if (playerSet.size < 4) {
+        if (errEl) { errEl.textContent = 'Doubles requires 4 distinct players. Check for duplicate selections.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+      if (isNaN(sA) || isNaN(sB) || sA < 0 || sB < 0 || sA === sB) {
+        if (errEl) { errEl.textContent = 'Please enter valid badminton scores (no ties allowed).'; errEl.classList.remove('hidden'); }
+        return;
+      }
+      if (!dateVal) {
+        if (errEl) { errEl.textContent = 'Please choose the date played.'; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      const newMatch = {
+        id: 'd_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        teamA: [a1, a2],
+        teamB: [b1, b2],
+        scoreA: sA,
+        scoreB: sB,
+        date: dateVal
+      };
+
+      state.doublesMatches.push(newMatch);
+      saveState();
+
+      currentPeriod = dateVal.substring(0, 7);
+      document.getElementById('doubles-score-a').value = '';
+      document.getElementById('doubles-score-b').value = '';
+
+      playSound('save');
+      renderAll();
+      showToast(`Doubles match logged: ${a1} & ${a2} (${sA}) vs (${sB}) ${b1} & ${b2}!`);
+    }
+
+    function handleAddPlayerSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('add-player-input');
+      const errEl = document.getElementById('player-error');
+      if (errEl) errEl.classList.add('hidden');
+      if (!input) return;
+
+      const name = input.value.trim();
+      if (!name) return;
+
+      if (state.players.some(p => p.toLowerCase() === name.toLowerCase())) {
+        if (errEl) { errEl.textContent = `Player "${name}" already exists.`; errEl.classList.remove('hidden'); }
+        return;
+      }
+
+      state.players.push(name);
+      saveState();
+      input.value = '';
+      renderAll();
+      showToast(`Player "${name}" added to roster!`);
+    }
+
+    function openDeleteModal(matchId, mode) {
+      matchPendingDelete = { id: matchId, mode: mode };
+      const matches = mode === 'singles' ? state.matches : state.doublesMatches;
+      const match = matches.find(m => m.id === matchId);
+      const descEl = document.getElementById('delete-modal-desc');
+
+      if (match && descEl) {
+        if (mode === 'singles') {
+          descEl.textContent = `Delete singles match between ${match.playerA} and ${match.playerB} (${match.scoreA}-${match.scoreB}) on ${formatDateDisplay(match.date)}?`;
+        } else {
+          descEl.textContent = `Delete doubles match between ${match.teamA.join(' & ')} and ${match.teamB.join(' & ')} (${match.scoreA}-${match.scoreB}) on ${formatDateDisplay(match.date)}?`;
+        }
+      }
+      const modal = document.getElementById('modal-delete');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeDeleteModal() {
-      matchPendingDeleteId = null;
-      document.getElementById('modal-delete').classList.add('hidden');
+      matchPendingDelete = null;
+      const modal = document.getElementById('modal-delete');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmDeleteMatch() {
+      if (!matchPendingDelete) return;
+      const { id, mode } = matchPendingDelete;
+
+      if (mode === 'singles') {
+        state.matches = state.matches.filter(m => m.id !== id);
+      } else {
+        state.doublesMatches = state.doublesMatches.filter(m => m.id !== id);
+      }
+
+      saveState();
+      playSound('delete');
+      closeDeleteModal();
+      renderAll();
+      showToast('Match deleted', '🗑️');
     }
 
     function openRemovePlayerModal(playerName) {
       playerPendingRemove = playerName;
-      const matchCount = state.matches.filter(m => m.playerA === playerName || m.playerB === playerName).length;
-      let text = `Remove "${playerName}" from the players list?`;
-      if (matchCount > 0) {
-        text += ` They have ${matchCount} match records which will still remain in historical records.`;
-      }
-      document.getElementById('remove-player-desc').textContent = text;
-      document.getElementById('modal-remove-player').classList.remove('hidden');
+      const countS = state.matches.filter(m => m.playerA === playerName || m.playerB === playerName).length;
+      const countD = state.doublesMatches.filter(m => (m.teamA && m.teamA.includes(playerName)) || (m.teamB && m.teamB.includes(playerName))).length;
+      const total = countS + countD;
+
+      let text = `Remove "${playerName}" from the roster?`;
+      if (total > 0) text += ` They have ${total} match records (${countS} singles, ${countD} doubles) which will be preserved in history.`;
+
+      const descEl = document.getElementById('remove-player-desc');
+      if (descEl) descEl.textContent = text;
+
+      const modal = document.getElementById('modal-remove-player');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeRemovePlayerModal() {
       playerPendingRemove = null;
-      document.getElementById('modal-remove-player').classList.add('hidden');
+      const modal = document.getElementById('modal-remove-player');
+      if (modal) modal.classList.add('hidden');
     }
 
-    function triggerAdjudgeWinner(periodKey) {
-      const standings = calculateStandings(periodKey);
-      const matches = getPeriodMatches(periodKey);
-      const periodLabel = getPeriodLabel(periodKey);
+    function confirmRemovePlayer() {
+      if (!playerPendingRemove) return;
+      state.players = state.players.filter(p => p !== playerPendingRemove);
+      saveState();
+      closeRemovePlayerModal();
+      renderAll();
+      showToast(`Player removed`, '🗑️');
+    }
+
+    function triggerAdjudgeWinner() {
+      const mode = currentGameMode;
+      const standings = calculateStandings(currentPeriod, mode);
+      const matches = getCurrentMatchesList();
+      const periodLabel = getPeriodLabel(currentPeriod);
+      const modeLabel = mode.toUpperCase();
 
       if (matches.length === 0 || standings.length === 0 || standings[0].played === 0) {
-        showToast('No matches played in this period to adjudge a winner', 'ℹ️');
+        showToast(`No ${mode} matches played in ${periodLabel} to crown a champion`, 'ℹ️');
         return;
       }
 
       const winner = standings[0];
       const isTie = standings.length > 1 && standings[1].wins === winner.wins;
 
-      state.adjudgedWinners[periodKey] = {
+      if (!state.adjudgedWinners[mode]) state.adjudgedWinners[mode] = {};
+      state.adjudgedWinners[mode][currentPeriod] = {
         player: winner.name,
         wins: winner.wins,
         ptsWon: winner.ptsWon,
@@ -1355,478 +2200,355 @@
 
       try {
         if (typeof confetti === 'function') {
-          confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
+          confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
         }
-      } catch (e) {
-        // ignore confetti errors
-      }
+      } catch (e) {}
 
       playSound('win');
 
-      document.getElementById('modal-adjudge-period').textContent = `${periodLabel.toUpperCase()} CHAMPION`;
-      document.getElementById('modal-adjudge-winner').textContent = winner.name;
-      document.getElementById('modal-adjudge-details').innerHTML = `
-        <div class="font-bold text-sm text-white">${winner.wins} Wins · ${winner.ptsWon} Total Points</div>
-        <div class="text-[11px] text-[#e5a93c]">${winner.played} Matches Played (${winner.winPct}% Win Rate)</div>
-      `;
+      const periodEl = document.getElementById('modal-adjudge-period');
+      if (periodEl) periodEl.textContent = `${periodLabel.toUpperCase()} ${modeLabel} CHAMPION`;
 
-      let reason = 'Winner adjudged by having the most wins in the month!';
-      if (isTie) {
-        reason = `Tied on ${winner.wins} wins with ${standings[1].name}! ${winner.name} takes the month with higher cumulative points won (${winner.ptsWon} vs ${standings[1].ptsWon}).`;
+      const winnerEl = document.getElementById('modal-adjudge-winner');
+      if (winnerEl) winnerEl.textContent = winner.name;
+
+      const detailsEl = document.getElementById('modal-adjudge-details');
+      if (detailsEl) {
+        detailsEl.innerHTML = `
+          <div class="font-bold text-sm text-white">${winner.wins} Wins · ${winner.ptsWon} Total Points</div>
+          <div class="text-[11px] text-[#e5a93c]">${winner.played} ${modeLabel} Games Played (${winner.winPct}% Win Rate)</div>
+        `;
       }
-      document.getElementById('modal-adjudge-reason').textContent = reason;
 
-      document.getElementById('modal-adjudge').classList.remove('hidden');
+      let reason = `Champion adjudged by having the most ${mode} wins in ${periodLabel}!`;
+      if (isTie) {
+        reason = `Tied on ${winner.wins} wins with ${standings[1].name}! ${winner.name} takes the month on higher cumulative points won (${winner.ptsWon} vs ${standings[1].ptsWon}).`;
+      }
+      const reasonEl = document.getElementById('modal-adjudge-reason');
+      if (reasonEl) reasonEl.textContent = reason;
+
+      const modal = document.getElementById('modal-adjudge');
+      if (modal) modal.classList.remove('hidden');
       renderStandings();
+    }
+
+    function closeAdjudgeModal() {
+      const modal = document.getElementById('modal-adjudge');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleAdjudgeMenuClick() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      triggerAdjudgeWinner();
+    }
+
+    function openHistoryModal() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const container = document.getElementById('champions-list-container');
+      if (container) {
+        container.innerHTML = '';
+        const sWinners = (state.adjudgedWinners && state.adjudgedWinners.singles) || {};
+        const dWinners = (state.adjudgedWinners && state.adjudgedWinners.doubles) || {};
+
+        const allKeys = new Set([...Object.keys(sWinners), ...Object.keys(dWinners)]);
+
+        if (allKeys.size === 0) {
+          container.innerHTML = '<div class="text-xs text-[#738b81] py-4 text-center">No past month champions crowned yet. Use "Adjudge Winner" to crown a champion!</div>';
+        } else {
+          Array.from(allKeys).sort().reverse().forEach(k => {
+            const periodTitle = getPeriodLabel(k);
+            if (sWinners[k]) {
+              const w = sWinners[k];
+              const div = document.createElement('div');
+              div.className = 'p-3 bg-[#182720] border border-[#273d32] rounded-xl text-xs flex items-center justify-between';
+              div.innerHTML = `
+                <div>
+                  <div class="flex items-center gap-1.5 font-bold text-[#48a97c]">
+                    <span>🏸 Singles</span> · <span>${periodTitle}</span>
+                  </div>
+                  <div class="text-white font-semibold text-sm">${escapeHtml(w.player)}</div>
+                </div>
+                <div class="text-right text-[11px] text-[#9eb4aa]">
+                  <div>${w.wins} Wins</div>
+                  <div>${w.ptsWon} Points</div>
+                </div>
+              `;
+              container.appendChild(div);
+            }
+
+            if (dWinners[k]) {
+              const w = dWinners[k];
+              const div = document.createElement('div');
+              div.className = 'p-3 bg-[#241c10] border border-[#4d3616] rounded-xl text-xs flex items-center justify-between';
+              div.innerHTML = `
+                <div>
+                  <div class="flex items-center gap-1.5 font-bold text-[#e5a93c]">
+                    <span>👥 Doubles</span> · <span>${periodTitle}</span>
+                  </div>
+                  <div class="text-white font-semibold text-sm">${escapeHtml(w.player)}</div>
+                </div>
+                <div class="text-right text-[11px] text-[#9eb4aa]">
+                  <div>${w.wins} Wins</div>
+                  <div>${w.ptsWon} Points</div>
+                </div>
+              `;
+              container.appendChild(div);
+            }
+          });
+        }
+      }
+      const modal = document.getElementById('modal-history');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeHistoryModal() {
+      const modal = document.getElementById('modal-history');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      saveState();
+      const badge = document.getElementById('sound-status-badge');
+      if (badge) {
+        badge.textContent = state.soundEnabled ? 'ON' : 'OFF';
+        badge.className = state.soundEnabled 
+          ? 'text-xs px-2 py-0.5 rounded bg-[#203429] text-[#48a97c]' 
+          : 'text-xs px-2 py-0.5 rounded bg-[#332222] text-rose-400';
+      }
+      showToast(`Sound ${state.soundEnabled ? 'Enabled' : 'Disabled'}`);
+    }
+
+    function exportDataJson() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', 'badminton_101_backup.json');
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('All Singles & Doubles data exported!');
+    }
+
+    function triggerImportJson() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const fileInput = document.getElementById('import-file-input');
+      if (fileInput) fileInput.click();
+    }
+
+    function resetSampleData() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      saveState();
+      currentPeriod = '2026-10';
+      renderAll();
+      showToast('Reset to Singles & Doubles sample data!');
+    }
+
+    function clearCurrentModeMatches() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      if (currentGameMode === 'singles') {
+        state.matches = [];
+        if (state.adjudgedWinners && state.adjudgedWinners.singles) state.adjudgedWinners.singles = {};
+      } else {
+        state.doublesMatches = [];
+        if (state.adjudgedWinners && state.adjudgedWinners.doubles) state.adjudgedWinners.doubles = {};
+      }
+      saveState();
+      renderAll();
+      showToast(`All ${currentGameMode} matches cleared`, '🗑️');
+    }
+
+    function openFirebaseModal() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      const modal = document.getElementById('modal-firebase');
+      if (modal) modal.classList.remove('hidden');
+      const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
+      const input = document.getElementById('firebase-config-input');
+      if (stored && input) input.value = stored;
+    }
+
+    function closeFirebaseModal() {
+      const modal = document.getElementById('modal-firebase');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveFirebaseConfig() {
+      const inputEl = document.getElementById('firebase-config-input');
+      const statusEl = document.getElementById('firebase-modal-status');
+      if (!inputEl || !statusEl) return;
+      const input = inputEl.value.trim();
+      statusEl.classList.remove('hidden');
+
+      if (!input) {
+        statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
+        statusEl.textContent = 'Please paste your Firebase config snippet or JSON.';
+        return;
+      }
+
+      try {
+        let config = null;
+        try {
+          if (input.startsWith('{') && input.endsWith('}')) config = JSON.parse(input);
+        } catch (je) {}
+
+        if (!config || !config.apiKey) {
+          const extract = (k) => { const m = input.match(new RegExp(k + ':\\s*[\"\\\']([^\"\\\']+)[\"\\\']', 'i')); return m ? m[1] : undefined; };
+          const apiKey = extract('apiKey');
+          const projectId = extract('projectId');
+          let databaseURL = extract('databaseURL');
+          const authDomain = extract('authDomain');
+          const appId = extract('appId');
+
+          if (!databaseURL && projectId) {
+            databaseURL = `https://${projectId}-default-rtdb.firebaseio.com`;
+          }
+
+          if (apiKey) {
+            config = { apiKey, databaseURL, projectId, authDomain, appId };
+          }
+        }
+
+        if (!config || !config.apiKey) {
+          statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
+          statusEl.textContent = 'Could not find a valid apiKey in the pasted config.';
+          return;
+        }
+
+        localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(config, null, 2));
+        statusEl.className = 'text-xs p-2 rounded-lg bg-emerald-950/60 text-emerald-300';
+        statusEl.textContent = 'Connecting to Firebase...';
+
+        initFirebase();
+        showToast('Firebase connected! Singles & Doubles live synced. ☁️');
+        setTimeout(() => closeFirebaseModal(), 1200);
+      } catch (e) {
+        statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
+        statusEl.textContent = 'Invalid format. Please paste the config object from Firebase.';
+      }
+    }
+
+    function disconnectFirebase() {
+      localStorage.removeItem(FIREBASE_CONFIG_KEY);
+      isCloudConnected = false;
+      if (cloudDbRef) {
+        cloudDbRef.off();
+        cloudDbRef = null;
+      }
+      const input = document.getElementById('firebase-config-input');
+      if (input) input.value = '';
+      updateCloudStatusBadge(false, 'Local Mode');
+      showToast('Disconnected from cloud. Using local storage.', 'ℹ️');
+      closeFirebaseModal();
     }
 
     function showToast(msg, icon = '✓') {
       const toast = document.getElementById('toast');
-      document.getElementById('toast-icon').textContent = icon;
-      document.getElementById('toast-msg').textContent = msg;
+      const iconEl = document.getElementById('toast-icon');
+      const msgEl = document.getElementById('toast-msg');
+      if (!toast) return;
+      if (iconEl) iconEl.textContent = icon;
+      if (msgEl) msgEl.textContent = msg;
       toast.classList.remove('hidden');
-      setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 2500);
+      setTimeout(() => toast.classList.add('hidden'), 2500);
     }
 
-    // --- Tab Switching ---
-    function switchTab(tabId) {
-      activeTab = tabId;
+    // --- App Init ---
+    function initApp() {
+      const dInput = document.getElementById('date-played-input');
+      if (dInput) dInput.value = '2026-10-19';
+      const ddInput = document.getElementById('doubles-date-input');
+      if (ddInput) ddInput.value = '2026-10-19';
 
-      const tabs = [
-        { id: 'standings', btn: document.getElementById('tab-standings'), view: document.getElementById('view-standings') },
-        { id: 'h2h', btn: document.getElementById('tab-h2h'), view: document.getElementById('view-h2h') },
-        { id: 'log', btn: document.getElementById('tab-log'), view: document.getElementById('view-log') },
-      ];
+      renderAll();
+      initFirebase();
+      setInterval(updateLiveTime, 10000);
 
-      tabs.forEach(t => {
-        const isActive = t.id === tabId;
-        if (isActive) {
-          t.btn.classList.add('text-white', 'font-semibold');
-          t.btn.classList.remove('text-[#789085]', 'font-medium');
-          t.btn.querySelector('.active-indicator').classList.remove('hidden');
-          t.view.classList.remove('hidden');
-        } else {
-          t.btn.classList.remove('text-white', 'font-semibold');
-          t.btn.classList.add('text-[#789085]', 'font-medium');
-          t.btn.querySelector('.active-indicator').classList.add('hidden');
-          t.view.classList.add('hidden');
+      document.addEventListener('click', (e) => {
+        const btn = document.getElementById('btn-options');
+        const dropdown = document.getElementById('options-dropdown');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+          if (btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+          }
         }
       });
 
-      if (tabId === 'standings') renderStandings();
-      if (tabId === 'h2h') renderH2H();
-      if (tabId === 'log') {
-        renderMatchesList();
-        renderPlayerChips();
+      const fileInput = document.getElementById('import-file-input');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const imported = JSON.parse(event.target.result);
+              if (imported && Array.isArray(imported.players)) {
+                state = ensureStateDefaults(imported);
+                saveState();
+                renderAll();
+                showToast('Singles & Doubles data imported successfully!');
+              } else {
+                showToast('Invalid JSON file format', '⚠️');
+              }
+            } catch (err) {
+              showToast('Error parsing JSON file', '⚠️');
+            }
+          };
+          reader.readAsText(file);
+        });
       }
     }
 
-    // --- Initialization & Event Listeners ---
-    document.addEventListener('DOMContentLoaded', () => {
+    // Window Exposure
+    window.switchGameMode = switchGameMode;
+    window.setDoublesH2HMode = setDoublesH2HMode;
+    window.switchTab = switchTab;
+    window.handlePeriodChange = handlePeriodChange;
+    window.toggleOptionsMenu = toggleOptionsMenu;
+    window.swapSinglesPlayers = swapSinglesPlayers;
+    window.swapDoublesTeams = swapDoublesTeams;
+    window.shuffleDoublesPartners = shuffleDoublesPartners;
+    window.quickScoreSingles = quickScoreSingles;
+    window.quickScoreDoubles = quickScoreDoubles;
+    window.handleSinglesMatchSubmit = handleSinglesMatchSubmit;
+    window.handleDoublesMatchSubmit = handleDoublesMatchSubmit;
+    window.handleAddPlayerSubmit = handleAddPlayerSubmit;
+    window.openDeleteModal = openDeleteModal;
+    window.closeDeleteModal = closeDeleteModal;
+    window.confirmDeleteMatch = confirmDeleteMatch;
+    window.openRemovePlayerModal = openRemovePlayerModal;
+    window.closeRemovePlayerModal = closeRemovePlayerModal;
+    window.confirmRemovePlayer = confirmRemovePlayer;
+    window.triggerAdjudgeWinner = triggerAdjudgeWinner;
+    window.closeAdjudgeModal = closeAdjudgeModal;
+    window.handleAdjudgeMenuClick = handleAdjudgeMenuClick;
+    window.openHistoryModal = openHistoryModal;
+    window.closeHistoryModal = closeHistoryModal;
+    window.toggleSound = toggleSound;
+    window.exportDataJson = exportDataJson;
+    window.triggerImportJson = triggerImportJson;
+    window.resetSampleData = resetSampleData;
+    window.clearCurrentModeMatches = clearCurrentModeMatches;
+    window.openFirebaseModal = openFirebaseModal;
+    window.closeFirebaseModal = closeFirebaseModal;
+    window.saveFirebaseConfig = saveFirebaseConfig;
+    window.disconnectFirebase = disconnectFirebase;
+    window.updateH2HView = updateH2HView;
 
-      const dateInput = document.getElementById('date-played-input');
-      const today = new Date();
-      const yyyy = today.getFullYear() === 2026 ? '2026' : '2026';
-      dateInput.value = `${yyyy}-10-19`;
-
-      // Initialize UI
-      renderAll();
-
-      // Initialize Firebase Connection
-      initFirebase();
-
-      // Live Time Clock ticker
-      setInterval(updateLiveTime, 10000);
-
-      // Period Select Handler
-      document.getElementById('period-select').addEventListener('change', (e) => {
-        currentPeriod = e.target.value;
-        renderStandings();
-        renderH2H();
-        renderMatchesList();
-      });
-
-      // Tabs click
-      document.getElementById('tab-standings').addEventListener('click', () => switchTab('standings'));
-      document.getElementById('tab-h2h').addEventListener('click', () => switchTab('h2h'));
-      document.getElementById('tab-log').addEventListener('click', () => switchTab('log'));
-
-      // Home / Close Button
-      document.getElementById('btn-home').addEventListener('click', () => {
-        switchTab('standings');
-      });
-
-      // Cloud Status Button Click -> opens Firebase modal
-      document.getElementById('btn-cloud-status').addEventListener('click', () => {
-        const modal = document.getElementById('modal-firebase');
-        modal.classList.remove('hidden');
-        const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
-        if (stored) {
-          document.getElementById('firebase-config-input').value = stored;
-        }
-      });
-
-      // Options: Firebase Setup Menu Item
-      document.getElementById('menu-firebase-setup').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        const modal = document.getElementById('modal-firebase');
-        modal.classList.remove('hidden');
-        const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
-        if (stored) {
-          document.getElementById('firebase-config-input').value = stored;
-        }
-      });
-
-      document.getElementById('btn-close-firebase').addEventListener('click', () => {
-        document.getElementById('modal-firebase').classList.add('hidden');
-      });
-
-      // Save Firebase Config
-      document.getElementById('btn-save-firebase').addEventListener('click', () => {
-        const input = document.getElementById('firebase-config-input').value.trim();
-        const statusEl = document.getElementById('firebase-modal-status');
-        statusEl.classList.remove('hidden');
-
-        if (!input) {
-          statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
-          statusEl.textContent = 'Please paste your Firebase config snippet or JSON.';
-          return;
-        }
-
-        try {
-          let config = null;
-          // Extract JSON or JavaScript object literal from snippet
-          if (input.startsWith('{') && input.endsWith('}')) {
-            config = JSON.parse(input);
-          } else {
-            // Regex match keys from `const firebaseConfig = { ... }`
-            const apiKey = (input.match(/apiKey:\s*["']([^"']+)["']/) || [])[1];
-            const databaseURL = (input.match(/databaseURL:\s*["']([^"']+)["']/) || [])[1];
-            const projectId = (input.match(/projectId:\s*["']([^"']+)["']/) || [])[1];
-            const authDomain = (input.match(/authDomain:\s*["']([^"']+)["']/) || [])[1];
-            const appId = (input.match(/appId:\s*["']([^"']+)["']/) || [])[1];
-
-            if (apiKey) {
-              config = { apiKey, databaseURL, projectId, authDomain, appId };
-            }
-          }
-
-          if (!config || !config.apiKey) {
-            statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
-            statusEl.textContent = 'Could not find a valid apiKey in the pasted config. Please check the format.';
-            return;
-          }
-
-          localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(config, null, 2));
-          statusEl.className = 'text-xs p-2 rounded-lg bg-emerald-950/60 text-emerald-300';
-          statusEl.textContent = 'Connecting to Firebase...';
-
-          initFirebase();
-          showToast('Firebase configured & connected! ☁️');
-          setTimeout(() => {
-            document.getElementById('modal-firebase').classList.add('hidden');
-          }, 1200);
-        } catch (e) {
-          statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
-          statusEl.textContent = 'Invalid format. Please paste the config object from Firebase.';
-        }
-      });
-
-      // Disconnect Firebase
-      document.getElementById('btn-disconnect-firebase').addEventListener('click', () => {
-        localStorage.removeItem(FIREBASE_CONFIG_KEY);
-        isCloudConnected = false;
-        if (cloudDbRef) {
-          cloudDbRef.off();
-          cloudDbRef = null;
-        }
-        document.getElementById('firebase-config-input').value = '';
-        updateCloudStatusBadge(false, 'Local Mode');
-        showToast('Disconnected from cloud. Using local storage.', 'ℹ️');
-        document.getElementById('modal-firebase').classList.add('hidden');
-      });
-
-      // Options Menu Toggle
-      const optionsBtn = document.getElementById('btn-options');
-      const optionsDropdown = document.getElementById('options-dropdown');
-      optionsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        optionsDropdown.classList.toggle('hidden');
-      });
-
-      document.addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-      });
-
-      // Options: Adjudge Winner
-      document.getElementById('menu-adjudge-winner').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        triggerAdjudgeWinner(currentPeriod);
-      });
-
-      document.getElementById('btn-adjudge-banner').addEventListener('click', () => {
-        triggerAdjudgeWinner(currentPeriod);
-      });
-
-      // Options: Winner History
-      document.getElementById('menu-winner-history').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        const container = document.getElementById('champions-list-container');
-        container.innerHTML = '';
-        const keys = Object.keys(state.adjudgedWinners);
-
-        if (keys.length === 0) {
-          container.innerHTML = '<div class="text-xs text-[#738b81] py-4 text-center">No past month champions crowned yet. Use "Adjudge Winner" to crown a champion!</div>';
-        } else {
-          keys.forEach(k => {
-            const w = state.adjudgedWinners[k];
-            const div = document.createElement('div');
-            div.className = 'p-3 bg-[#182720] border border-[#273d32] rounded-xl text-xs flex items-center justify-between';
-            div.innerHTML = `
-              <div>
-                <div class="font-bold text-[#e5a93c]">${getPeriodLabel(k)}</div>
-                <div class="text-white font-semibold text-sm">${escapeHtml(w.player)}</div>
-              </div>
-              <div class="text-right text-[11px] text-[#9eb4aa]">
-                <div>${w.wins} Wins</div>
-                <div>${w.ptsWon} Points</div>
-              </div>
-            `;
-            container.appendChild(div);
-          });
-        }
-        document.getElementById('modal-history').classList.remove('hidden');
-      });
-
-      document.getElementById('btn-close-history').addEventListener('click', () => {
-        document.getElementById('modal-history').classList.add('hidden');
-      });
-
-      // Options: Sound Toggle
-      document.getElementById('menu-toggle-sound').addEventListener('click', () => {
-        state.soundEnabled = !state.soundEnabled;
-        saveState();
-        document.getElementById('sound-status-badge').textContent = state.soundEnabled ? 'ON' : 'OFF';
-        document.getElementById('sound-status-badge').className = state.soundEnabled 
-          ? 'text-xs px-2 py-0.5 rounded bg-[#203429] text-[#48a97c]' 
-          : 'text-xs px-2 py-0.5 rounded bg-[#332222] text-rose-400';
-        showToast(`Sound ${state.soundEnabled ? 'Enabled' : 'Disabled'}`);
-      });
-
-      // Options: Export JSON
-      document.getElementById('menu-export-json').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute('href', dataStr);
-        downloadAnchor.setAttribute('download', 'badminton_101_backup.json');
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        showToast('Data exported successfully');
-      });
-
-      // Options: Import JSON
-      document.getElementById('menu-import-json').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        document.getElementById('import-file-input').click();
-      });
-
-      document.getElementById('import-file-input').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const imported = JSON.parse(event.target.result);
-            if (imported && Array.isArray(imported.players) && Array.isArray(imported.matches)) {
-              state = imported;
-              saveState();
-              renderAll();
-              showToast('Data imported successfully!');
-            } else {
-              showToast('Invalid JSON file format', '⚠️');
-            }
-          } catch (err) {
-            showToast('Error parsing JSON file', '⚠️');
-          }
-        };
-        reader.readAsText(file);
-      });
-
-      // Options: Reset to Sample Data
-      document.getElementById('menu-reset-sample').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-        saveState();
-        currentPeriod = '2026-10';
-        renderAll();
-        showToast('Reset to screenshot data!');
-      });
-
-      // Options: Clear All Matches
-      document.getElementById('menu-clear-all').addEventListener('click', () => {
-        optionsDropdown.classList.add('hidden');
-        state.matches = [];
-        state.adjudgedWinners = {};
-        saveState();
-        renderAll();
-        showToast('All matches cleared', '🗑️');
-      });
-
-      // Swap Players Button
-      document.getElementById('btn-swap-players').addEventListener('click', () => {
-        const selA = document.getElementById('player-a-select');
-        const selB = document.getElementById('player-b-select');
-        const valA = selA.value;
-        const valB = selB.value;
-        selA.value = valB;
-        selB.value = valA;
-
-        const scoreA = document.getElementById('score-a-input');
-        const scoreB = document.getElementById('score-b-input');
-        const sValA = scoreA.value;
-        scoreA.value = scoreB.value;
-        scoreB.value = sValA;
-      });
-
-      // Quick Score Buttons
-      document.querySelectorAll('.btn-quick-score').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const sa = e.currentTarget.getAttribute('data-sa');
-          const sb = e.currentTarget.getAttribute('data-sb');
-          document.getElementById('score-a-input').value = sa;
-          document.getElementById('score-b-input').value = sb;
-        });
-      });
-
-      // Head to Head player selectors change
-      document.getElementById('h2h-player-a').addEventListener('change', updateH2HView);
-      document.getElementById('h2h-player-b').addEventListener('change', updateH2HView);
-
-      // Match Form Submit (Save match)
-      document.getElementById('match-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const errEl = document.getElementById('form-error');
-        errEl.classList.add('hidden');
-
-        const pA = document.getElementById('player-a-select').value;
-        const pB = document.getElementById('player-b-select').value;
-        const sA = parseInt(document.getElementById('score-a-input').value, 10);
-        const sB = parseInt(document.getElementById('score-b-input').value, 10);
-        const dateVal = document.getElementById('date-played-input').value;
-
-        if (!pA || !pB) {
-          errEl.textContent = 'Please select both players.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (pA === pB) {
-          errEl.textContent = 'Player A and Player B cannot be the same person.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (isNaN(sA) || isNaN(sB) || sA < 0 || sB < 0) {
-          errEl.textContent = 'Please enter valid non-negative scores.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (sA === sB) {
-          errEl.textContent = 'Badminton games cannot end in a tie. One player must win.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (!dateVal) {
-          errEl.textContent = 'Please select the date played.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        const newMatch = {
-          id: 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-          playerA: pA,
-          playerB: pB,
-          scoreA: sA,
-          scoreB: sB,
-          date: dateVal
-        };
-
-        state.matches.push(newMatch);
-        saveState();
-
-        const matchMonth = dateVal.substring(0, 7);
-        currentPeriod = matchMonth;
-
-        document.getElementById('score-a-input').value = '';
-        document.getElementById('score-b-input').value = '';
-
-        playSound('save');
-        renderAll();
-        showToast(`Match saved: ${pA} ${sA} - ${sB} ${pB}`);
-      });
-
-      // Add Player Form Submit
-      document.getElementById('add-player-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = document.getElementById('add-player-input');
-        const errEl = document.getElementById('player-error');
-        errEl.classList.add('hidden');
-
-        const name = input.value.trim();
-        if (!name) return;
-
-        if (state.players.some(p => p.toLowerCase() === name.toLowerCase())) {
-          errEl.textContent = `Player "${name}" already exists.`;
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        state.players.push(name);
-        saveState();
-        input.value = '';
-        renderAll();
-        showToast(`Player "${name}" added!`);
-      });
-
-      // Delete Match Modal handlers
-      document.getElementById('btn-cancel-delete').addEventListener('click', closeDeleteModal);
-      document.getElementById('btn-confirm-delete').addEventListener('click', () => {
-        if (!matchPendingDeleteId) return;
-        state.matches = state.matches.filter(m => m.id !== matchPendingDeleteId);
-        saveState();
-        playSound('delete');
-        closeDeleteModal();
-        renderAll();
-        showToast('Match deleted', '🗑️');
-      });
-
-      // Remove Player Modal handlers
-      document.getElementById('btn-cancel-remove-player').addEventListener('click', closeRemovePlayerModal);
-      document.getElementById('btn-confirm-remove-player').addEventListener('click', () => {
-        if (!playerPendingRemove) return;
-        state.players = state.players.filter(p => p !== playerPendingRemove);
-        saveState();
-        closeRemovePlayerModal();
-        renderAll();
-        showToast(`Player removed`, '🗑️');
-      });
-
-      // Close Adjudge Modal
-      document.getElementById('btn-close-adjudge').addEventListener('click', () => {
-        document.getElementById('modal-adjudge').classList.add('hidden');
-      });
-
-    });
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
   </script>
 </body>
 </html>
