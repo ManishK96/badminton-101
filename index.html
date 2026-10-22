@@ -15,6 +15,7 @@
   <!-- Firebase SDK (Compat version for pure browser execution without bundler) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <script>
     tailwind.config = {
@@ -93,36 +94,49 @@
   <div class="w-full max-w-md min-h-screen sm:min-h-0 sm:my-4 bg-[#101915] sm:border sm:border-[#22352c] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative pb-10">
 
     <!-- Top Status / Header -->
-    <header class="px-5 pt-4 pb-2 bg-[#101915] border-b border-[#1b2b23] relative z-20">
+    <header class="px-4 sm:px-5 pt-4 pb-2 bg-[#101915] border-b border-[#1b2b23] relative z-20">
       <div class="flex items-center justify-between mb-3">
         <!-- Close / Reset Home button -->
-        <button id="btn-home" onclick="switchTab('standings')" aria-label="Home" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="btn-home" onclick="switchTab('standings')" aria-label="Home" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
 
-        <!-- Cloud Sync Status Pill -->
-        <button id="btn-cloud-status" onclick="openFirebaseModal()" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all">
-          <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span id="cloud-status-text">Local Mode</span>
-        </button>
+        <!-- Right Header Status Group (Cloud Sync + Auth Status) -->
+        <div class="flex items-center gap-1.5">
+          <!-- Cloud Sync Status Pill -->
+          <button id="btn-cloud-status" onclick="openFirebaseModal()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all">
+            <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span id="cloud-status-text">Local Mode</span>
+          </button>
+
+          <!-- Auth Status Pill (Restricted to 3 Editor Emails) -->
+          <button id="btn-auth-status" onclick="openAuthModal()" class="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#1a211d] border border-[#26372d] text-[#8fa39a] hover:border-[#48a97c] transition-all">
+            <span id="auth-status-icon">🔒</span>
+            <span id="auth-status-text">View Only</span>
+          </button>
+        </div>
 
         <!-- Options menu (...) button -->
         <div class="relative">
-          <button id="btn-options" onclick="toggleOptionsMenu(event)" aria-label="Menu" class="w-9 h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <button id="btn-options" onclick="toggleOptionsMenu(event)" aria-label="Menu" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#1b2b23] hover:bg-[#253a30] text-[#9eb4aa] hover:text-white flex items-center justify-center transition-colors">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
             </svg>
           </button>
           
           <!-- Dropdown Menu -->
-          <div id="options-dropdown" class="hidden absolute right-0 mt-2 w-60 bg-[#16231d] border border-[#273d32] rounded-xl shadow-xl py-2 z-50 text-sm">
-            <button id="menu-firebase-setup" onclick="openFirebaseModal()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#48a97c] font-semibold">
+          <div id="options-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-[#16231d] border border-[#273d32] rounded-xl shadow-xl py-2 z-50 text-sm">
+            <button id="menu-auth-btn" onclick="openAuthModal()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#48a97c] font-semibold">
+              <span id="menu-auth-icon">🔑</span>
+              <span id="menu-auth-label">Account</span>
+            </button>
+            <div class="h-px bg-[#24382e] my-1"></div>
+            <button id="menu-firebase-setup" onclick="openFirebaseModal()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#c4d4cc]">
               <span>☁️</span>
               <span>Firebase Real-time Sync</span>
             </button>
-            <div class="h-px bg-[#24382e] my-1"></div>
             <button id="menu-adjudge-winner" onclick="handleAdjudgeMenuClick()" class="w-full text-left px-4 py-2 hover:bg-[#203229] flex items-center gap-2 text-[#e5a93c]">
               <span>👑</span>
               <span id="menu-adjudge-text">Adjudge Month Winner</span>
@@ -156,14 +170,14 @@
       </div>
 
       <!-- App Title & Period Selector Row -->
-      <div class="flex items-end justify-between gap-3 pt-1">
+      <div class="flex items-end justify-between gap-2 pt-1">
         <div>
-          <h1 class="text-3xl tracking-wider font-bebas text-white uppercase leading-none">BADMINTON 101</h1>
+          <h1 class="text-2xl sm:text-3xl tracking-wider font-bebas text-white uppercase leading-none">BADMINTON 101</h1>
           <p class="text-[10px] text-[#6e857b] font-medium tracking-wide mt-0.5" id="header-mode-subtitle">SINGLES & DOUBLES TRACKER</p>
         </div>
-        <div class="text-right">
-          <label for="period-select" class="block text-[10px] tracking-wider uppercase text-[#738b81] font-semibold mb-0.5">PERIOD</label>
-          <select id="period-select" onchange="handlePeriodChange(event)" class="bg-[#182720] border border-[#25392f] text-white text-xs rounded-lg px-2.5 py-1.5 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
+        <div class="text-right shrink-0">
+          <label for="period-select" class="block text-[9px] sm:text-[10px] tracking-wider uppercase text-[#738b81] font-semibold mb-0.5">PERIOD</label>
+          <select id="period-select" onchange="handlePeriodChange(event)" class="bg-[#182720] border border-[#25392f] text-white text-xs rounded-lg px-2 sm:px-2.5 py-1.5 font-medium focus:outline-none focus:border-[#48a97c] cursor-pointer">
             <option value="2026-10">October 2026</option>
             <option value="2026-09">September 2026</option>
             <option value="2026-11">November 2026</option>
@@ -173,7 +187,7 @@
       </div>
 
       <!-- GAME MODE SELECTOR: SINGLES VS DOUBLES -->
-      <div class="pt-3 pb-1">
+      <div class="pt-2.5 pb-1">
         <div class="flex items-center p-1 bg-[#0c1411] border border-[#22352c] rounded-xl text-xs font-semibold">
           <button id="mode-btn-singles" onclick="switchGameMode('singles')" class="flex-1 py-1.5 rounded-lg text-center transition-all bg-[#1b2b23] text-white shadow-sm flex items-center justify-center gap-1.5 border border-[#2e473b]">
             <span>🏸</span>
@@ -187,63 +201,73 @@
       </div>
 
       <!-- Navigation Tabs -->
-      <nav class="flex border-b border-[#21342a] mt-3 text-sm font-medium">
-        <button id="tab-standings" onclick="switchTab('standings')" class="tab-button flex-1 pb-2.5 text-center transition-all relative font-semibold text-white">
+      <nav class="flex border-b border-[#21342a] mt-2.5 text-sm font-medium">
+        <button id="tab-standings" onclick="switchTab('standings')" class="tab-button flex-1 pb-2 text-center transition-all relative font-semibold text-white">
           Standings
           <span class="active-indicator absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
-        <button id="tab-h2h" onclick="switchTab('h2h')" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
+        <button id="tab-h2h" onclick="switchTab('h2h')" class="tab-button flex-1 pb-2 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
           Head to head
           <span class="active-indicator hidden absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
-        <button id="tab-log" onclick="switchTab('log')" class="tab-button flex-1 pb-2.5 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
+        <button id="tab-log" onclick="switchTab('log')" class="tab-button flex-1 pb-2 text-center text-[#789085] hover:text-[#c4d4cc] transition-all relative font-medium">
           Log a match
           <span class="active-indicator hidden absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#48a97c] rounded-t-full"></span>
         </button>
       </nav>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 px-5 py-4 overflow-y-auto space-y-6">
+    <!-- Main Content Container (Refined mobile padding) -->
+    <main class="flex-1 px-3.5 sm:px-5 py-4 overflow-y-auto space-y-5">
 
       <!-- ============================================== -->
       <!-- TAB 1: STANDINGS -->
       <!-- ============================================== -->
-      <section id="view-standings" class="space-y-5">
+      <section id="view-standings" class="space-y-4">
 
         <!-- Leading / Champion Card -->
-        <div id="leading-card" class="bg-[#241a0e] border border-[#483315] rounded-xl p-4 shadow-lg relative overflow-hidden transition-all">
+        <div id="leading-card" class="bg-[#241a0e] border border-[#483315] rounded-xl p-3.5 sm:p-4 shadow-lg relative overflow-hidden transition-all">
           <div class="flex items-center justify-between text-[11px] font-bold tracking-widest uppercase text-[#e5a93c] mb-1">
             <span id="leading-badge-text">LEADING · OCTOBER 2026 (SINGLES)</span>
             <button id="btn-adjudge-banner" onclick="triggerAdjudgeWinner()" class="text-[10px] bg-[#3a2914] hover:bg-[#4f3719] text-[#fcd34d] px-2 py-0.5 rounded border border-[#6b4c20] transition-colors">
               Adjudge Winner
             </button>
           </div>
-          <h2 id="leading-player-name" class="text-4xl font-bebas tracking-wide text-white leading-tight">Manish</h2>
+          <h2 id="leading-player-name" class="text-3xl sm:text-4xl font-bebas tracking-wide text-white leading-tight">Manish</h2>
           <div class="flex items-center justify-between mt-0.5">
             <p id="leading-stats" class="text-xs font-semibold text-[#e5a93c]">3 wins · 78 points won</p>
             <span id="leading-tie-note" class="text-[10px] text-[#b38531] italic hidden">Tie-breaker: total points</span>
           </div>
         </div>
 
-        <!-- Standings Table -->
+        <!-- Standings Table (RESPONSIVE & CLEANLY SIZED TO SCREEN) -->
         <div class="space-y-1">
-          <div class="flex items-center justify-between pb-1">
+          <div class="flex items-center justify-between pb-1 px-1">
             <h3 class="text-xs font-bold uppercase tracking-wider text-[#738b81]" id="standings-table-title">
-              INDIVIDUAL STANDINGS
+              SINGLES STANDINGS
             </h3>
-            <span class="text-[10px] text-[#5e776d] font-medium" id="standings-mode-pill">SINGLES</span>
+            <span class="text-[10px] text-[#5e776d] font-semibold px-2 py-0.5 rounded bg-[#13201a]" id="standings-mode-pill">SINGLES</span>
           </div>
 
-          <!-- Table Header -->
-          <div class="grid grid-cols-12 text-[10px] font-bold uppercase tracking-wider text-[#738b81] px-3 pb-1 border-b border-[#1b2b23]">
-            <div class="col-span-1 text-center">#</div>
-            <div class="col-span-3">PLAYER</div>
-            <div class="col-span-2 text-right">PLAYED</div>
-            <div class="col-span-2 text-right">WINS</div>
-            <div class="col-span-1 text-right">LOST</div>
-            <div class="col-span-1 text-right">WIN %</div>
-            <div class="col-span-2 text-right">PTS WON</div>
+          <!-- Table Header: Perfectly proportional flex columns to fit all phone widths -->
+          <div class="flex items-center text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#738b81] px-2.5 sm:px-3 pb-2 border-b border-[#1b2b23]">
+            <div class="w-6 text-center shrink-0">#</div>
+            <div class="flex-1 min-w-0 pl-1.5 pr-2 truncate">PLAYER</div>
+            <div class="w-9 sm:w-10 text-center shrink-0" title="Played">
+              <span class="sm:hidden">P</span><span class="hidden sm:inline">PLAYED</span>
+            </div>
+            <div class="w-9 sm:w-10 text-center shrink-0" title="Wins">
+              <span class="sm:hidden">W</span><span class="hidden sm:inline">WINS</span>
+            </div>
+            <div class="w-9 sm:w-10 text-center shrink-0" title="Lost">
+              <span class="sm:hidden">L</span><span class="hidden sm:inline">LOST</span>
+            </div>
+            <div class="w-12 sm:w-14 text-center shrink-0" title="Win Percentage">
+              WIN%
+            </div>
+            <div class="w-12 sm:w-14 text-right shrink-0" title="Points Won">
+              <span class="sm:hidden">PTS</span><span class="hidden sm:inline">PTS WON</span>
+            </div>
           </div>
 
           <!-- Table Rows List -->
@@ -254,7 +278,7 @@
 
         <!-- Doubles Top Partnerships Sub-Card (Visible only in Doubles mode) -->
         <div id="doubles-pairs-section" class="hidden space-y-2 pt-1">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between px-1">
             <h3 class="text-xs font-bold uppercase tracking-wider text-[#738b81]">TOP PAIRINGS (PARTNERSHIPS)</h3>
             <span class="text-[10px] text-[#5e776d]">DOUBLES DUOS</span>
           </div>
@@ -264,16 +288,16 @@
         </div>
 
         <!-- Quick Summary Mini-Stats -->
-        <div class="grid grid-cols-3 gap-2 pt-2">
-          <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-3 text-center">
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-2.5 sm:p-3 text-center">
             <div class="text-[10px] uppercase font-bold tracking-wider text-[#6e857b]">Matches</div>
             <div id="stat-total-matches" class="text-xl font-bebas text-white mt-0.5">4</div>
           </div>
-          <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-3 text-center">
+          <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-2.5 sm:p-3 text-center">
             <div class="text-[10px] uppercase font-bold tracking-wider text-[#6e857b]">Total Points</div>
             <div id="stat-total-points" class="text-xl font-bebas text-white mt-0.5">151</div>
           </div>
-          <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-3 text-center">
+          <div class="bg-[#14221b] border border-[#22352c] rounded-xl p-2.5 sm:p-3 text-center">
             <div class="text-[10px] uppercase font-bold tracking-wider text-[#6e857b]">Avg / Match</div>
             <div id="stat-avg-points" class="text-xl font-bebas text-white mt-0.5">37.8</div>
           </div>
@@ -284,7 +308,7 @@
       <!-- ============================================== -->
       <!-- TAB 2: HEAD TO HEAD -->
       <!-- ============================================== -->
-      <section id="view-h2h" class="space-y-5 hidden">
+      <section id="view-h2h" class="space-y-4 hidden">
 
         <!-- Matchup Picker for Singles -->
         <div id="h2h-picker-singles" class="bg-[#14221b] border border-[#22352c] rounded-xl p-3">
@@ -347,19 +371,14 @@
         <!-- H2H Comparison Card -->
         <div id="h2h-card" class="bg-[#14221b] border border-[#22352c] rounded-xl p-4 shadow-lg space-y-4">
           <div class="flex items-start justify-between">
-            <!-- Left Player / Team -->
             <div class="w-5/12 text-left">
               <h3 id="h2h-name-a" class="text-base font-bold text-white truncate">Manish</h3>
               <div id="h2h-wins-a" class="text-4xl font-bebas text-[#e5a93c] leading-none mt-1">3</div>
               <div id="h2h-rate-a" class="text-xs text-[#738b81] mt-1">75% win rate</div>
             </div>
-
-            <!-- Center Match Count -->
             <div class="w-2/12 text-center pt-2">
               <span id="h2h-matches-count" class="text-[10px] font-bold uppercase tracking-wider text-[#738b81]">4 MATCHES</span>
             </div>
-
-            <!-- Right Player / Team -->
             <div class="w-5/12 text-right">
               <h3 id="h2h-name-b" class="text-base font-bold text-white truncate">Pranav</h3>
               <div id="h2h-wins-b" class="text-4xl font-bebas text-[#8fa39a] leading-none mt-1">1</div>
@@ -421,7 +440,16 @@
       <!-- ============================================== -->
       <!-- TAB 3: LOG A MATCH & MANAGEMENT -->
       <!-- ============================================== -->
-      <section id="view-log" class="space-y-6 hidden">
+      <section id="view-log" class="space-y-5 hidden">
+
+        <!-- Spectator Read-Only Lock Banner (Shown if not signed in as Manish, Pranav, or Nitesh) -->
+        <!-- View Only Banner (Shown when not signed in as an authorized editor) -->
+        <div id="spectator-warning-banner" class="p-3 rounded-xl bg-[#14201a] border border-[#1f3127] text-xs text-[#8fa39a] flex items-center justify-between">
+          <span class="flex items-center gap-2 font-medium">
+            <span>🔒</span> <span>View Only</span>
+          </span>
+          <span class="text-[10px] text-[#5e776d]">Match logging is disabled</span>
+        </div>
 
         <!-- LOG MATCH: SINGLES FORM -->
         <form id="singles-match-form" onsubmit="handleSinglesMatchSubmit(event)" class="space-y-4">
@@ -491,8 +519,9 @@
 
           <div id="form-error-singles" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-lg"></div>
 
+          <!-- Save Button (Restricted by JS to authorized emails) -->
           <button type="submit" id="btn-save-singles-match" class="w-full py-3.5 px-4 bg-[#48a97c] hover:bg-[#54bc8b] active:scale-[0.99] text-[#0c1a14] font-bold text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-            <span>Save Singles Match</span>
+            <span id="btn-save-singles-text">Save Singles Match</span>
           </button>
         </form>
 
@@ -507,7 +536,6 @@
 
           <!-- Doubles Teams Selection Grid -->
           <div class="grid grid-cols-2 gap-3">
-            <!-- Team A -->
             <div class="bg-[#14221b] border border-[#23372c] p-2.5 rounded-xl space-y-2">
               <span class="block text-[10px] font-bold uppercase tracking-wider text-[#48a97c]">TEAM A (PAIR)</span>
               <div>
@@ -520,7 +548,6 @@
               </div>
             </div>
 
-            <!-- Team B -->
             <div class="bg-[#14221b] border border-[#23372c] p-2.5 rounded-xl space-y-2">
               <span class="block text-[10px] font-bold uppercase tracking-wider text-[#e5a93c]">TEAM B (PAIR)</span>
               <div>
@@ -578,13 +605,13 @@
           <div id="form-error-doubles" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-lg"></div>
 
           <button type="submit" id="btn-save-doubles-match" class="w-full py-3.5 px-4 bg-[#e5a93c] hover:bg-[#f59e0b] active:scale-[0.99] text-[#140e05] font-bold text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-            <span>Save Doubles Match</span>
+            <span id="btn-save-doubles-text">Save Doubles Match</span>
           </button>
         </form>
 
         <!-- Matches List Section -->
         <div class="space-y-3 pt-2">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between px-1">
             <h3 id="matches-header-title" class="text-xs font-bold uppercase tracking-wider text-[#738b81]">
               MATCHES · OCTOBER 2026 (4)
             </h3>
@@ -599,7 +626,7 @@
 
         <!-- Players Management Section -->
         <div class="space-y-3 pt-3 border-t border-[#1b2b23]">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between px-1">
             <h3 class="text-xs font-bold uppercase tracking-wider text-[#738b81]">ROSTER & PLAYERS</h3>
             <span class="text-[10px] text-[#5e776d]">Shared across Singles & Doubles</span>
           </div>
@@ -623,9 +650,9 @@
       </section>
 
       <!-- Explanatory Footer Text -->
-      <footer class="pt-4 border-t border-[#1b2b23] text-xs text-[#6e857b] space-y-3">
+      <footer class="pt-4 border-t border-[#1b2b23] text-xs text-[#6e857b] space-y-2">
         <p class="leading-relaxed">
-          Most wins takes the month. If wins are level, the player with more total points won takes it. Singles and Doubles are tracked with independent standings.
+          Most wins takes the month. If wins are level, the player with more total points won takes it. Singles and Doubles standings are tracked independently.
         </p>
         <p id="live-status-time" class="text-[#556961] text-[11px]">
           Live sync ready.
@@ -637,6 +664,22 @@
     <!-- ============================================== -->
     <!-- MODALS & DIALOGS -->
     <!-- ============================================== -->
+
+    <!-- User Authentication & Access Control Modal -->
+    <div id="modal-auth" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-[#14221b] border border-[#2b4136] rounded-2xl p-5 max-w-sm w-full shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-[#22352c] pb-2">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <span>👤</span> Player Authentication
+          </h3>
+          <button id="btn-close-auth" onclick="closeAuthModal()" class="text-[#738b81] hover:text-white">✕</button>
+        </div>
+
+        <div id="auth-modal-content" class="space-y-3">
+          <!-- Dynamically populated via renderAuthModal() -->
+        </div>
+      </div>
+    </div>
 
     <!-- Firebase Real-Time Cloud Sync Modal -->
     <div id="modal-firebase" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -650,17 +693,9 @@
 
         <div class="text-xs text-[#9eb4aa] space-y-2 leading-relaxed">
           <p>
-            Connect a 100% free Google Firebase Realtime Database so all of you can log singles and doubles matches on your phones with live real-time syncing!
+            Connect your Google Firebase project for live real-time score syncing across all devices.
           </p>
-          <div class="bg-[#0e1713] p-2.5 rounded-xl border border-[#24392e] text-[11px] space-y-1">
-            <div class="font-bold text-[#48a97c]">Quick Setup (1 min):</div>
-            <ol class="list-decimal list-inside space-y-0.5 text-[#8fa39a]">
-              <li>Go to <a href="https://console.firebase.google.com" target="_blank" class="text-[#48a97c] underline">console.firebase.google.com</a> → <strong>Add project</strong>.</li>
-              <li>Click <strong>Build → Realtime Database → Create Database</strong>.</li>
-              <li>Go to <strong>Project Settings (⚙️) → Your Apps → Web (&lt;/&gt;)</strong> and copy <code class="text-amber-300">firebaseConfig</code>.</li>
-            </ol>
-          </div>
-        </div>
+                  </div>
 
         <div class="space-y-3">
           <div>
@@ -777,14 +812,24 @@
     // --- Application State ---
     const STORAGE_KEY = 'badminton_101_app_state_v2';
     const FIREBASE_CONFIG_KEY = 'badminton_101_firebase_config_v1';
+    
 
+    // =========================================================================
+    // 🔒 RESTRICTED EDITORS (ONLY THESE 3 EMAILS CAN WRITE/EDIT)
+    // =========================================================================
+    const AUTHORIZED_EMAILS = [
+      'manish.shreedhar@gmail.com',
+      'pranavsrinivasa@gmail.com',
+      'niteshshet3@gmail.com'
+    ];
+
+    
     // =========================================================================
     // ☁️ FIREBASE CLOUD CONFIGURATION (FOR GITHUB PAGES AUTO-SYNC)
     // Paste your Firebase config object here before pushing to GitHub Pages so
     // that anyone who opens your link connects to live sync automatically!
     // =========================================================================
-    const EMBEDDED_FIREBASE_CONFIG = 
-        {
+    const EMBEDDED_FIREBASE_CONFIG = {
       apiKey: "AIzaSyD3IkAifCkJQuzOSlNUjy-1aAzj5JZWFv0",
       authDomain: "badminton-101-57f82.firebaseapp.com",
       databaseURL: "https://badminton-101-57f82-default-rtdb.firebaseio.com/",
@@ -796,17 +841,16 @@
     };
 
     const DEFAULT_DATA = {
-      players: ['Manish', 'Nitesh', 'Pranav', 'Karthik'],
-      matches: [ // Singles matches (exact match to screenshot)
+      players: ['Manish', 'Nitesh', 'Pranav', 'Sampreeth'],
+      matches: [
         { id: 's1', playerA: 'Manish', playerB: 'Pranav', scoreA: 22, scoreB: 20, date: '2026-10-19' },
         { id: 's2', playerA: 'Manish', playerB: 'Pranav', scoreA: 14, scoreB: 21, date: '2026-10-19' },
         { id: 's3', playerA: 'Manish', playerB: 'Pranav', scoreA: 21, scoreB: 13, date: '2026-10-19' },
         { id: 's4', playerA: 'Manish', playerB: 'Pranav', scoreA: 21, scoreB: 19, date: '2026-10-19' }
       ],
-      doublesMatches: [ // Doubles matches
-        { id: 'd1', teamA: ['Manish', 'Pranav'], teamB: ['Nitesh', 'Karthik'], scoreA: 21, scoreB: 17, date: '2026-10-19' },
-        { id: 'd2', teamA: ['Manish', 'Nitesh'], teamB: ['Pranav', 'Karthik'], scoreA: 18, scoreB: 21, date: '2026-10-19' },
-        { id: 'd3', teamA: ['Manish', 'Karthik'], teamB: ['Nitesh', 'Pranav'], scoreA: 21, scoreB: 19, date: '2026-10-19' }
+      doublesMatches: [
+        { id: 'd1', teamA: ['Manish', 'Pranav'], teamB: ['Nitesh', 'Sampreeth'], scoreA: 21, scoreB: 17, date: '2026-10-19' },
+        { id: 'd2', teamA: ['Manish', 'Nitesh'], teamB: ['Pranav', 'Sampreeth'], scoreA: 18, scoreB: 21, date: '2026-10-19' }
       ],
       soundEnabled: true,
       adjudgedWinners: {
@@ -820,12 +864,27 @@
     let activeTab = 'standings'; // 'standings' | 'h2h' | 'log'
     let currentGameMode = 'singles'; // 'singles' | 'doubles'
     let doublesH2HMode = 'players'; // 'players' | 'teams'
-    let matchPendingDelete = null; // { id, type: 'singles'|'doubles' }
+    let matchPendingDelete = null; // { id, mode: 'singles'|'doubles' }
     let playerPendingRemove = null;
+
+    // --- Authentication & Access Control State ---
+    let authUser = null;
+    
+
+    function isAuthorizedEmail(email) {
+      if (!email || typeof email !== 'string') return false;
+      return AUTHORIZED_EMAILS.includes(email.trim().toLowerCase());
+    }
+
+    function isAuthorizedEditor() {
+      if (authUser && authUser.email && isAuthorizedEmail(authUser.email)) return true;
+      return false;
+    }
 
     // --- Firebase Real-Time Synchronization Layer ---
     let firebaseApp = null;
     let firebaseDb = null;
+    let firebaseAuth = null;
     let cloudDbRef = null;
     let isCloudConnected = false;
     let isRemoteUpdate = false;
@@ -833,7 +892,7 @@
     function initFirebase() {
       let config = null;
 
-      // 1. Check if hardcoded in EMBEDDED_FIREBASE_CONFIG (for GitHub Pages auto-sync)
+      // 1. Check if hardcoded in EMBEDDED_FIREBASE_CONFIG
       if (typeof EMBEDDED_FIREBASE_CONFIG !== 'undefined' && EMBEDDED_FIREBASE_CONFIG && EMBEDDED_FIREBASE_CONFIG.apiKey && EMBEDDED_FIREBASE_CONFIG.apiKey.trim() !== '') {
         config = EMBEDDED_FIREBASE_CONFIG;
       }
@@ -849,7 +908,10 @@
             try {
               config = JSON.parse(stored);
             } catch (err) {
-              const extract = (k) => { const m = stored.match(new RegExp(k + ':\\s*[\"\\\']([^\"\\\']+)[\"\\\']', 'i')); return m ? m[1] : undefined; };
+              const extract = (k) => {
+                const m = stored.match(new RegExp(k + ':\\s*["\']([^"\']+)["\']', 'i'));
+                return m ? m[1] : undefined;
+              };
               const apiKey = extract('apiKey');
               if (apiKey) {
                 config = {
@@ -873,6 +935,7 @@
 
       if (!config || !config.apiKey) {
         updateCloudStatusBadge(false, 'Local Mode');
+        updateAuthUI();
         return;
       }
 
@@ -891,6 +954,16 @@
         firebaseDb = firebase.database();
         cloudDbRef = firebaseDb.ref('badminton_shared_data');
 
+        // Setup Firebase Auth
+        if (firebase.auth) {
+          firebaseAuth = firebase.auth();
+          firebaseAuth.onAuthStateChanged((user) => {
+            authUser = user;
+            updateAuthUI();
+          });
+        }
+
+        // Real-time listener for incoming changes from friends
         cloudDbRef.on('value', (snapshot) => {
           const val = snapshot.val();
           if (val && Array.isArray(val.players)) {
@@ -900,13 +973,17 @@
             renderAll();
             isRemoteUpdate = false;
             updateCloudStatusBadge(true, 'Live Synced');
-          } else if (!val) {
+          } else if (!val && isAuthorizedEditor()) {
             cloudDbRef.set(state);
             updateCloudStatusBadge(true, 'Live Synced');
           }
         }, (error) => {
-          console.warn('Firebase sync error:', error);
-          updateCloudStatusBadge(false, 'Sync Offline');
+          console.warn('Firebase sync read/write event:', error);
+          if (error && error.code === 'PERMISSION_DENIED') {
+            updateCloudStatusBadge(true, 'Read Only');
+          } else {
+            updateCloudStatusBadge(false, 'Sync Offline');
+          }
         });
 
         isCloudConnected = true;
@@ -916,12 +993,23 @@
         isCloudConnected = false;
         updateCloudStatusBadge(false, 'Config Error');
       }
+
+      updateAuthUI();
     }
 
     function syncStateToCloud(newState) {
       if (!isCloudConnected || !cloudDbRef || isRemoteUpdate) return;
+      if (!isAuthorizedEditor()) {
+        console.warn('Blocked cloud sync: current user does not have write permissions.');
+        return;
+      }
       try {
-        cloudDbRef.set(newState);
+        cloudDbRef.set(newState).catch(e => {
+          console.warn('Firebase set error:', e);
+          if (e && e.code === 'PERMISSION_DENIED') {
+            showToast('Write rejected: View only mode', '🔒');
+          }
+        });
       } catch (e) {
         console.warn('Failed to sync state to cloud', e);
       }
@@ -936,11 +1024,206 @@
       label.textContent = text;
       if (connected) {
         dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-        btn.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#132a1f] border border-[#2e5e45] text-emerald-300 hover:border-emerald-400 transition-all';
+        btn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#132a1f] border border-[#2e5e45] text-emerald-300 hover:border-emerald-400 transition-all';
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-        btn.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all';
+        btn.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#1a2921] border border-[#273d32] text-[#9eb4aa] hover:border-[#48a97c] transition-all';
       }
+    }
+
+    // --- Authentication Actions ---
+    async function loginWithGoogle() {
+      if (!firebaseApp || !firebase.auth) {
+        showToast('Please connect Firebase first', '⚠️');
+        openFirebaseModal();
+        return;
+      }
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const result = await firebase.auth().signInWithPopup(provider);
+        const email = result.user.email;
+        if (isAuthorizedEmail(email)) {
+          showToast(`Welcome ${result.user.displayName || email}!`, '✅');
+        } else {
+          showToast('View only mode', 'ℹ️');
+        }
+        closeAuthModal();
+      } catch (err) {
+        console.error('Google Sign-in Error:', err);
+        if (err.code === 'auth/unauthorized-domain') {
+          showToast('Domain not authorized in Firebase Console', '⚠️');
+        } else if (err.code !== 'auth/popup-closed-by-user') {
+          showToast(err.message || 'Sign in failed', '⚠️');
+        }
+      }
+    }
+
+    async function logoutUser() {
+      try {
+        if (firebase.auth && firebase.apps.length) {
+          await firebase.auth().signOut();
+        }
+        authUser = null;
+        updateAuthUI();
+        closeAuthModal();
+        showToast('Signed out', 'ℹ️');
+      } catch (e) {
+        console.error('Sign-out error:', e);
+      }
+    }
+
+    function openAuthModal() {
+      const dropdown = document.getElementById('options-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      renderAuthModal();
+      const modal = document.getElementById('modal-auth');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('modal-auth');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function renderAuthModal() {
+      const container = document.getElementById('auth-modal-content');
+      if (!container) return;
+
+      const authorized = isAuthorizedEditor();
+
+      if (authorized) {
+        const displayName = authUser && authUser.displayName ? authUser.displayName : 'Editor';
+        const email = authUser && authUser.email ? authUser.email : '';
+
+        container.innerHTML = `
+          <div class="bg-[#12241b] border border-[#2b4c37] p-3.5 rounded-xl space-y-2">
+            <div class="flex items-center gap-2 text-[#48a97c] font-bold text-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <span>Editor</span>
+            </div>
+            <div class="text-xs text-white font-medium">${escapeHtml(displayName)}</div>
+            ${email ? `<div class="text-[11px] text-[#8fa39a] font-mono truncate">${escapeHtml(email)}</div>` : ''}
+          </div>
+          <button type="button" onclick="logoutUser()" class="w-full py-2.5 bg-[#203429] hover:bg-rose-950/60 hover:text-rose-300 text-[#c4d4cc] text-xs font-bold rounded-xl transition-colors">
+            Sign Out
+          </button>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="space-y-3 py-1 text-center">
+            <div class="text-xs text-[#8fa39a]">
+              This scoreboard is currently in <strong>View Only</strong> mode.
+            </div>
+            <button type="button" onclick="loginWithGoogle()" class="w-full py-2.5 bg-[#48a97c] hover:bg-[#54bc8b] text-[#0c1a14] font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Sign in with Google</span>
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function updateAuthUI() {
+      const authorized = isAuthorizedEditor();
+
+      // Top auth status pill
+      const authBtn = document.getElementById('btn-auth-status');
+      const authIcon = document.getElementById('auth-status-icon');
+      const authText = document.getElementById('auth-status-text');
+      const menuIcon = document.getElementById('menu-auth-icon');
+      const menuLabel = document.getElementById('menu-auth-label');
+
+      if (authBtn && authIcon && authText) {
+        if (authorized) {
+          let shortName = 'Editor';
+          if (authUser && authUser.displayName) shortName = authUser.displayName.split(' ')[0];
+          else if (authUser && authUser.email) shortName = authUser.email.split('@')[0];
+
+          authIcon.textContent = '🟢';
+          authText.textContent = shortName;
+          authBtn.className = 'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#132a1f] border border-[#2e5e45] text-emerald-300 hover:border-emerald-400 transition-all';
+          if (menuIcon) menuIcon.textContent = '👤';
+          if (menuLabel) menuLabel.textContent = `Signed in (${shortName})`;
+        } else {
+          authIcon.textContent = '🔒';
+          authText.textContent = 'View Only';
+          authBtn.className = 'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#1a211d] border border-[#26372d] text-[#8fa39a] hover:border-[#48a97c] transition-all';
+          if (menuIcon) menuIcon.textContent = '👤';
+          if (menuLabel) menuLabel.textContent = 'Account';
+        }
+      }
+
+      // Adjudge winner button on champion card (Standings tab)
+      const adjudgeBtn = document.getElementById('btn-adjudge-banner');
+      if (adjudgeBtn) {
+        if (authorized) adjudgeBtn.classList.remove('hidden');
+        else adjudgeBtn.classList.add('hidden');
+      }
+
+      // Dropdown menu items requiring write access
+      const menuAdjudge = document.getElementById('menu-adjudge-winner');
+      const menuReset = document.getElementById('menu-reset-sample');
+      const menuClear = document.getElementById('menu-clear-all');
+      const menuImport = document.getElementById('menu-import-json');
+
+      if (menuAdjudge) {
+        if (authorized) menuAdjudge.classList.remove('hidden');
+        else menuAdjudge.classList.add('hidden');
+      }
+      if (menuReset) {
+        if (authorized) menuReset.classList.remove('hidden');
+        else menuReset.classList.add('hidden');
+      }
+      if (menuClear) {
+        if (authorized) menuClear.classList.remove('hidden');
+        else menuClear.classList.add('hidden');
+      }
+      if (menuImport) {
+        if (authorized) menuImport.classList.remove('hidden');
+        else menuImport.classList.add('hidden');
+      }
+
+      // Log tab spectator warning banner & forms
+      const banner = document.getElementById('spectator-warning-banner');
+      const fSingles = document.getElementById('singles-match-form');
+      const fDoubles = document.getElementById('doubles-match-form');
+      const fAddPlayer = document.getElementById('add-player-form');
+
+      if (banner) {
+        if (authorized) banner.classList.add('hidden');
+        else banner.classList.remove('hidden');
+      }
+
+      if (fSingles && fDoubles) {
+        if (authorized) {
+          if (currentGameMode === 'singles') {
+            fSingles.classList.remove('hidden');
+            fDoubles.classList.add('hidden');
+          } else {
+            fSingles.classList.add('hidden');
+            fDoubles.classList.remove('hidden');
+          }
+        } else {
+          // Hide write forms in view-only mode
+          fSingles.classList.add('hidden');
+          fDoubles.classList.add('hidden');
+        }
+      }
+
+      if (fAddPlayer) {
+        if (authorized) fAddPlayer.classList.remove('hidden');
+        else fAddPlayer.classList.add('hidden');
+      }
+
+      // Re-render matches list & player chips to toggle delete/remove controls
+      renderMatchesList();
+      renderPlayerChips();
     }
 
     // --- Web Audio Synthesizer ---
@@ -972,8 +1255,8 @@
         const now = ctx.currentTime;
         if (type === 'save') {
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(587.33, now); // D5
-          osc.frequency.setValueAtTime(880, now + 0.1); // A5
+          osc.frequency.setValueAtTime(587.33, now);
+          osc.frequency.setValueAtTime(880, now + 0.1);
           gain.gain.setValueAtTime(0.15, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
           osc.start(now);
@@ -1008,11 +1291,10 @@
       if (!s || typeof s !== 'object') {
         s = JSON.parse(JSON.stringify(DEFAULT_DATA));
       }
-      if (!Array.isArray(s.players)) s.players = ['Manish', 'Nitesh', 'Pranav', 'Karthik'];
+      if (!Array.isArray(s.players)) s.players = ['Manish', 'Nitesh', 'Pranav', 'Sampreeth'];
       if (!Array.isArray(s.matches)) s.matches = [];
       if (!Array.isArray(s.doublesMatches)) s.doublesMatches = [];
 
-      // Migrate older adjudgedWinners if flat object
       if (!s.adjudgedWinners || typeof s.adjudgedWinners !== 'object') {
         s.adjudgedWinners = { singles: {}, doubles: {} };
       } else if (!s.adjudgedWinners.singles && !s.adjudgedWinners.doubles) {
@@ -1027,10 +1309,8 @@
 
     function loadState() {
       try {
-        // Try v2 storage first
         let stored = localStorage.getItem(STORAGE_KEY);
         if (!stored) {
-          // Fallback to v1 storage and migrate
           stored = localStorage.getItem('badminton_101_app_state_v1');
         }
         if (stored) {
@@ -1114,7 +1394,6 @@
           }
         });
       } else {
-        // Doubles individual standings
         const matches = (periodKey === 'ALL') ? state.doublesMatches : state.doublesMatches.filter(m => m.date.startsWith(periodKey));
         matches.forEach(m => {
           const teamAPlayers = Array.isArray(m.teamA) ? m.teamA : [];
@@ -1156,7 +1435,6 @@
       return list;
     }
 
-    // Doubles Pair Standings (Duo synergy)
     function calculateDoublesPairs(periodKey) {
       const matches = (periodKey === 'ALL') ? state.doublesMatches : state.doublesMatches.filter(m => m.date.startsWith(periodKey));
       const pairStats = {};
@@ -1215,20 +1493,23 @@
         if (menuAdjudgeText) menuAdjudgeText.textContent = 'Adjudge Doubles Winner';
       }
 
-      // Toggle form visibilities in Log tab
       const fSingles = document.getElementById('singles-match-form');
       const fDoubles = document.getElementById('doubles-match-form');
       if (fSingles && fDoubles) {
-        if (mode === 'singles') {
-          fSingles.classList.remove('hidden');
-          fDoubles.classList.add('hidden');
+        if (isAuthorizedEditor()) {
+          if (mode === 'singles') {
+            fSingles.classList.remove('hidden');
+            fDoubles.classList.add('hidden');
+          } else {
+            fSingles.classList.add('hidden');
+            fDoubles.classList.remove('hidden');
+          }
         } else {
           fSingles.classList.add('hidden');
-          fDoubles.classList.remove('hidden');
+          fDoubles.classList.add('hidden');
         }
       }
 
-      // Toggle H2H picker
       const h2hSingles = document.getElementById('h2h-picker-singles');
       const h2hDoubles = document.getElementById('h2h-picker-doubles');
       if (h2hSingles && h2hDoubles) {
@@ -1241,7 +1522,6 @@
         }
       }
 
-      // Toggle doubles pairs in standings
       const pairsSec = document.getElementById('doubles-pairs-section');
       if (pairsSec) {
         if (mode === 'doubles') pairsSec.classList.remove('hidden');
@@ -1307,6 +1587,7 @@
       populateSinglesFormPlayers();
       populateDoublesFormPlayers();
       updateLiveTime();
+      updateAuthUI();
     }
 
     function renderPeriodDropdown() {
@@ -1385,7 +1666,7 @@
         if (leadingCard) leadingCard.classList.add('opacity-60');
       }
 
-      // Render Table
+      // Render Table Rows (Resized & Proportionally Spaced to Never Smush)
       const tbody = document.getElementById('standings-table-body');
       if (tbody) {
         tbody.innerHTML = '';
@@ -1395,20 +1676,20 @@
           const rank = idx + 1;
           const isFirst = rank === 1 && s.played > 0;
           const row = document.createElement('div');
-          row.className = `grid grid-cols-12 items-center text-xs px-3 py-2.5 rounded-xl transition-all ${
+          row.className = `flex items-center text-xs px-2.5 sm:px-3 py-2.5 rounded-xl transition-all ${
             isFirst 
               ? 'bg-[#251c10] border border-[#523a19] text-[#fcd34d] font-semibold shadow-md' 
               : 'bg-[#14221b] border border-[#1e2f28] text-[#c4d4cc]'
           }`;
 
           row.innerHTML = `
-            <div class="col-span-1 text-center font-bold text-sm ${isFirst ? 'text-[#e5a93c]' : 'text-[#6e857b]'}">${rank}</div>
-            <div class="col-span-3 font-bold truncate ${isFirst ? 'text-white text-sm' : 'text-[#e3ebe7]'}">${escapeHtml(s.name)}</div>
-            <div class="col-span-2 text-right ${isFirst ? 'text-white' : 'text-[#8fa39a]'}">${s.played}</div>
-            <div class="col-span-2 text-right font-bold text-sm ${isFirst ? 'text-[#e5a93c]' : 'text-white'}">${s.wins}</div>
-            <div class="col-span-1 text-right text-[#6e857b]">${s.lost}</div>
-            <div class="col-span-1 text-right text-[#8fa39a]">${s.winPct}%</div>
-            <div class="col-span-2 text-right font-semibold ${isFirst ? 'text-white' : 'text-[#a3b8af]'}">${s.ptsWon}</div>
+            <div class="w-6 text-center font-bold text-sm shrink-0 ${isFirst ? 'text-[#e5a93c]' : 'text-[#6e857b]'}">${rank}</div>
+            <div class="flex-1 min-w-0 pl-1.5 pr-2 font-bold truncate ${isFirst ? 'text-white text-sm' : 'text-[#e3ebe7]'}">${escapeHtml(s.name)}</div>
+            <div class="w-9 sm:w-10 text-center shrink-0 font-medium ${isFirst ? 'text-white' : 'text-[#8fa39a]'}">${s.played}</div>
+            <div class="w-9 sm:w-10 text-center shrink-0 font-bold text-sm ${isFirst ? 'text-[#e5a93c]' : 'text-white'}">${s.wins}</div>
+            <div class="w-9 sm:w-10 text-center shrink-0 font-medium text-[#6e857b]">${s.lost}</div>
+            <div class="w-12 sm:w-14 text-center shrink-0 font-medium ${isFirst ? 'text-white' : 'text-[#8fa39a]'}">${s.winPct}%</div>
+            <div class="w-12 sm:w-14 text-right shrink-0 font-semibold ${isFirst ? 'text-white' : 'text-[#a3b8af]'}">${s.ptsWon}</div>
           `;
           tbody.appendChild(row);
         });
@@ -1476,7 +1757,6 @@
     }
 
     function renderH2H() {
-      // Singles options
       const sA = document.getElementById('h2h-player-a');
       const sB = document.getElementById('h2h-player-b');
       if (sA && sB) {
@@ -1484,7 +1764,6 @@
         populateSelect(sB, state.players, sB.value || state.players[1] || state.players[0]);
       }
 
-      // Doubles Player vs Player options
       const dPA = document.getElementById('h2h-d-player-a');
       const dPB = document.getElementById('h2h-d-player-b');
       if (dPA && dPB) {
@@ -1492,7 +1771,6 @@
         populateSelect(dPB, state.players, dPB.value || state.players[1] || state.players[0]);
       }
 
-      // Doubles Team vs Team options
       const tA1 = document.getElementById('h2h-team-a1');
       const tA2 = document.getElementById('h2h-team-a2');
       const tB1 = document.getElementById('h2h-team-b1');
@@ -1527,9 +1805,6 @@
       const winsB = document.getElementById('h2h-wins-b');
       const matchesCount = document.getElementById('h2h-matches-count');
       const matchesList = document.getElementById('h2h-matches-list');
-      const diffEl = document.getElementById('h2h-diff');
-      const avgEl = document.getElementById('h2h-avg');
-      const streakEl = document.getElementById('h2h-streak');
       const chemCard = document.getElementById('doubles-chemistry-card');
 
       if (!card) return;
@@ -1569,9 +1844,7 @@
         renderH2HCardDisplay(pA, pB, wA, wB, ptsA, ptsB, h2hMatches, false);
 
       } else {
-        // Doubles mode
         if (doublesH2HMode === 'players') {
-          // Player vs Player across all doubles matches
           const pAEl = document.getElementById('h2h-d-player-a');
           const pBEl = document.getElementById('h2h-d-player-b');
           if (!pAEl || !pBEl) return;
@@ -1593,13 +1866,11 @@
           card.classList.remove('opacity-50');
           const allMatches = (currentPeriod === 'ALL') ? state.doublesMatches : state.doublesMatches.filter(m => m.date.startsWith(currentPeriod));
           
-          // Opposing matches
           const opposingMatches = allMatches.filter(m => 
             (m.teamA.includes(pA) && m.teamB.includes(pB)) ||
             (m.teamA.includes(pB) && m.teamB.includes(pA))
           );
 
-          // Teaming up together matches
           const partnerMatches = allMatches.filter(m =>
             (m.teamA.includes(pA) && m.teamA.includes(pB)) ||
             (m.teamB.includes(pA) && m.teamB.includes(pB))
@@ -1617,7 +1888,6 @@
 
           renderH2HCardDisplay(pA, pB, wA, wB, ptsA, ptsB, opposingMatches, true);
 
-          // Render chemistry card
           if (chemCard) {
             chemCard.classList.remove('hidden');
             let partWins = 0, partPts = 0;
@@ -1640,7 +1910,6 @@
           }
 
         } else {
-          // Team vs Team
           if (chemCard) chemCard.classList.add('hidden');
           const tA1 = document.getElementById('h2h-team-a1').value;
           const tA2 = document.getElementById('h2h-team-a2').value;
@@ -1732,7 +2001,6 @@
       const avgB = total > 0 ? (ptsB / total).toFixed(1) : '0';
       avgEl.textContent = `${avgA} vs ${avgB}`;
 
-      // Streak
       let streakPlayer = null;
       let streakCount = 0;
       for (let i = matches.length - 1; i >= 0; i--) {
@@ -1762,7 +2030,6 @@
       }
       streakEl.textContent = streakPlayer ? `${streakPlayer} (${streakCount} ${streakCount === 1 ? 'win' : 'wins'})` : 'None';
 
-      // Matches list
       if (matchesList) {
         matchesList.innerHTML = '';
         if (matches.length === 0) {
@@ -1806,6 +2073,7 @@
       const matches = getCurrentMatchesList();
       const periodLabel = getPeriodLabel(currentPeriod).toUpperCase();
       const modeLabel = currentGameMode.toUpperCase();
+      const authorized = isAuthorizedEditor();
 
       const titleEl = document.getElementById('matches-header-title');
       if (titleEl) titleEl.textContent = `${modeLabel} MATCHES · ${periodLabel} (${matches.length})`;
@@ -1820,7 +2088,7 @@
       if (matches.length === 0) {
         container.innerHTML = `
           <div class="p-6 text-center text-xs text-[#6e857b] bg-[#14221b] border border-[#22352c] rounded-xl">
-            No ${currentGameMode} matches logged for ${getPeriodLabel(currentPeriod)}. Use the form above to log a match!
+            No ${currentGameMode} matches logged for ${getPeriodLabel(currentPeriod)}.
           </div>
         `;
         return;
@@ -1830,6 +2098,12 @@
       reversed.forEach(m => {
         const item = document.createElement('div');
         item.className = 'flex items-center justify-between py-2.5 border-b border-[#1b2b23] last:border-0';
+
+        const deleteButtonHtml = authorized ? `
+          <button type="button" onclick="openDeleteModal('${m.id}', '${currentGameMode}')" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
+            Delete
+          </button>
+        ` : '';
 
         if (currentGameMode === 'singles') {
           item.innerHTML = `
@@ -1841,9 +2115,7 @@
               </div>
               <div class="text-xs text-[#6e857b]">${formatDateDisplay(m.date)}</div>
             </div>
-            <button type="button" onclick="openDeleteModal('${m.id}', 'singles')" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
-              Delete
-            </button>
+            ${deleteButtonHtml}
           `;
         } else {
           const tA = Array.isArray(m.teamA) ? m.teamA.join(' & ') : 'Team A';
@@ -1857,9 +2129,7 @@
               </div>
               <div class="text-xs text-[#6e857b]">${formatDateDisplay(m.date)}</div>
             </div>
-            <button type="button" onclick="openDeleteModal('${m.id}', 'doubles')" class="btn-delete-match text-xs text-[#738b81] hover:text-rose-400 underline transition-colors px-1 py-1">
-              Delete
-            </button>
+            ${deleteButtonHtml}
           `;
         }
         container.appendChild(item);
@@ -1870,15 +2140,21 @@
       const container = document.getElementById('players-chips-container');
       if (!container) return;
       container.innerHTML = '';
+      const authorized = isAuthorizedEditor();
 
       state.players.forEach(p => {
         const chip = document.createElement('div');
         chip.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#182721] border border-[#25392f] text-xs font-medium text-white';
+        
+        const removeButtonHtml = authorized ? `
+          <button type="button" onclick="openRemovePlayerModal('${escapeHtml(p)}')" class="btn-remove-player text-[#738b81] hover:text-rose-400 text-xs ml-1 transition-colors">
+            ✕
+          </button>
+        ` : '';
+
         chip.innerHTML = `
           <span>${escapeHtml(p)}</span>
-          <button type="button" onclick="openRemovePlayerModal('${escapeHtml(p)}')" class="btn-remove-player text-[#738b81] hover:text-rose-400 text-xs ml-1 transition-colors">
-            Remove
-          </button>
+          ${removeButtonHtml}
         `;
         container.appendChild(chip);
       });
@@ -1925,7 +2201,7 @@
         .replace(/'/g, '&#039;');
     }
 
-    // --- Interactive Form Handlers ---
+    // --- Interactive Form Handlers (Enforcing Write Restrictions) ---
     function swapSinglesPlayers() {
       const selA = document.getElementById('player-a-select');
       const selB = document.getElementById('player-b-select');
@@ -1989,6 +2265,11 @@
 
     function handleSinglesMatchSubmit(e) {
       if (e) e.preventDefault();
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
+
       const errEl = document.getElementById('form-error-singles');
       if (errEl) errEl.classList.add('hidden');
 
@@ -2029,11 +2310,16 @@
 
       playSound('save');
       renderAll();
-      showToast(`Singles match logged: ${pA} ${sA} - ${sB} ${pB}!`);
+      showToast(`Singles match saved: ${pA} ${sA} - ${sB} ${pB}!`);
     }
 
     function handleDoublesMatchSubmit(e) {
       if (e) e.preventDefault();
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
+
       const errEl = document.getElementById('form-error-doubles');
       if (errEl) errEl.classList.add('hidden');
 
@@ -2047,7 +2333,7 @@
 
       const playerSet = new Set([a1, a2, b1, b2]);
       if (playerSet.size < 4) {
-        if (errEl) { errEl.textContent = 'Doubles requires 4 distinct players. Check for duplicate selections.'; errEl.classList.remove('hidden'); }
+        if (errEl) { errEl.textContent = 'Doubles requires 4 distinct players. Check for duplicates.'; errEl.classList.remove('hidden'); }
         return;
       }
       if (isNaN(sA) || isNaN(sB) || sA < 0 || sB < 0 || sA === sB) {
@@ -2077,11 +2363,16 @@
 
       playSound('save');
       renderAll();
-      showToast(`Doubles match logged: ${a1} & ${a2} (${sA}) vs (${sB}) ${b1} & ${b2}!`);
+      showToast(`Doubles match saved: ${a1} & ${a2} (${sA}) vs (${sB}) ${b1} & ${b2}!`);
     }
 
     function handleAddPlayerSubmit(e) {
       if (e) e.preventDefault();
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
+
       const input = document.getElementById('add-player-input');
       const errEl = document.getElementById('player-error');
       if (errEl) errEl.classList.add('hidden');
@@ -2103,6 +2394,10 @@
     }
 
     function openDeleteModal(matchId, mode) {
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
       matchPendingDelete = { id: matchId, mode: mode };
       const matches = mode === 'singles' ? state.matches : state.doublesMatches;
       const match = matches.find(m => m.id === matchId);
@@ -2126,6 +2421,10 @@
     }
 
     function confirmDeleteMatch() {
+      if (!isAuthorizedEditor()) {
+        showToast('Permission denied', '🔒');
+        return;
+      }
       if (!matchPendingDelete) return;
       const { id, mode } = matchPendingDelete;
 
@@ -2143,6 +2442,10 @@
     }
 
     function openRemovePlayerModal(playerName) {
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
       playerPendingRemove = playerName;
       const countS = state.matches.filter(m => m.playerA === playerName || m.playerB === playerName).length;
       const countD = state.doublesMatches.filter(m => (m.teamA && m.teamA.includes(playerName)) || (m.teamB && m.teamB.includes(playerName))).length;
@@ -2165,6 +2468,10 @@
     }
 
     function confirmRemovePlayer() {
+      if (!isAuthorizedEditor()) {
+        showToast('Permission denied', '🔒');
+        return;
+      }
       if (!playerPendingRemove) return;
       state.players = state.players.filter(p => p !== playerPendingRemove);
       saveState();
@@ -2174,6 +2481,10 @@
     }
 
     function triggerAdjudgeWinner() {
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
       const mode = currentGameMode;
       const standings = calculateStandings(currentPeriod, mode);
       const matches = getCurrentMatchesList();
@@ -2335,6 +2646,10 @@
     }
 
     function triggerImportJson() {
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
       const dropdown = document.getElementById('options-dropdown');
       if (dropdown) dropdown.classList.add('hidden');
       const fileInput = document.getElementById('import-file-input');
@@ -2342,6 +2657,10 @@
     }
 
     function resetSampleData() {
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
       const dropdown = document.getElementById('options-dropdown');
       if (dropdown) dropdown.classList.add('hidden');
       state = JSON.parse(JSON.stringify(DEFAULT_DATA));
@@ -2352,6 +2671,10 @@
     }
 
     function clearCurrentModeMatches() {
+      if (!isAuthorizedEditor()) {
+        showToast('View only mode', '🔒');
+        return;
+      }
       const dropdown = document.getElementById('options-dropdown');
       if (dropdown) dropdown.classList.add('hidden');
       if (currentGameMode === 'singles') {
@@ -2401,7 +2724,10 @@
         } catch (je) {}
 
         if (!config || !config.apiKey) {
-          const extract = (k) => { const m = input.match(new RegExp(k + ':\\s*[\"\\\']([^\"\\\']+)[\"\\\']', 'i')); return m ? m[1] : undefined; };
+          const extract = (k) => {
+            const m = input.match(new RegExp(k + ':\\s*["\']([^"\']+)["\']', 'i'));
+            return m ? m[1] : undefined;
+          };
           const apiKey = extract('apiKey');
           const projectId = extract('projectId');
           let databaseURL = extract('databaseURL');
@@ -2428,7 +2754,7 @@
         statusEl.textContent = 'Connecting to Firebase...';
 
         initFirebase();
-        showToast('Firebase connected! Singles & Doubles live synced. ☁️');
+        showToast('Firebase connected! Live syncing active. ☁️');
         setTimeout(() => closeFirebaseModal(), 1200);
       } catch (e) {
         statusEl.className = 'text-xs p-2 rounded-lg bg-rose-950/60 text-rose-300';
@@ -2543,6 +2869,10 @@
     window.saveFirebaseConfig = saveFirebaseConfig;
     window.disconnectFirebase = disconnectFirebase;
     window.updateH2HView = updateH2HView;
+    window.loginWithGoogle = loginWithGoogle;
+    window.logoutUser = logoutUser;
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initApp);
